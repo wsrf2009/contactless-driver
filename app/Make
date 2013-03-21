@@ -1,4 +1,3 @@
-
 CROSS_COMPILE=/opt/acr910/arm-2009q1/bin/arm-none-linux-gnueabi-
 AR=$(CROSS_COMPILE)ar
 ARCH=arm
