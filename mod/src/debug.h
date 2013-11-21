@@ -1,9 +1,3 @@
-/*
-* Name: Debug Message
-* Date: 2012/10/08
-* Author: Alex Wang
-* Version: 1.0
-*/
 
 #ifndef DEBUG_H
 #define DEBUG_H
@@ -12,26 +6,26 @@
 
 #define Debug
 
-#define DBGL1 1
-#define DBGL2 2
-#define DBGL3 3
-#define DBGL4 4
-#define DBGL5 5
-#define DBGL6 6
+#define LEVEL1 1
+#define LEVEL2 2
+#define LEVEL3 3
+#define LEVEL4 4
+
 
 
 #ifdef Debug
-#define PrtMsg(p, arg...)               \
+#define pprintk(p, arg...)               \
 ({                                      \
     if(p > 0)    printk(arg);           \
                                         \
 }) 
 #else
-#define PrtMsg(p, arg...)
+#define pprintk(p, arg...)
 #endif
 
-
-
-
+#define TRACE_TO(arg...)		pprintk(LEVEL3,	arg)
+#define WARN_TO(arg...)			pprintk(LEVEL2, arg)
+#define	ERROR_TO(arg...)		pprintk(LEVEL1, arg)
+#define INFO_TO(arg...)			pprintk(LEVEL4, arg)
 
 #endif

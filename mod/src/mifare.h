@@ -13,8 +13,6 @@
 
 
 
-//===== Mifare macros======
-//Mifare Memory
 #define PICC_MF_KEY_A           0x60    // authentication using key A
 #define PICC_MF_KEY_B           0x61    // authentication using key B
 #define PICC_MF_READ            0x30    // read block
@@ -30,25 +28,10 @@
 
 
 
-struct mifareInfo
-{
-    /* mifare transmission control parameters */
-    volatile UINT8 workKey[6];
-    volatile UINT8 keyValid;
-    volatile UINT8 keyType;
-    volatile UINT8 keyNo;
-    volatile UINT8 authNeed;
-    volatile UINT8 block;
-};
 
-extern struct mifareInfo mifare;
-
-
-
-
-UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *recLen);
-UINT8 MifareSelect(void);
-
+int mifare_select(struct picc_device *picc);
+int mifare_pcsc_command(struct picc_device *picc, u8 *senBuf, u32 senLen, u8 *recBuf, u32 *recLen);
+void mifare_type_coding(struct picc_device *picc);
 
 
 #endif

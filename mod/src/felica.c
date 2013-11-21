@@ -4,123 +4,118 @@
 
 #include <linux/string.h>
 
-
-
 #include "common.h"
-#include "felica.h"
-#include "pn512.h"
-#include "pn512app.h"
-#include "delay.h"
 #include "picc.h"
+#include "felica.h"
 #include "debug.h"
 
-UINT16 feliSysCode = FELICA_APPLICATION_ALL;
 
-const UINT8 gaFelRFCon[RF_FEL_CON_LEN] = {0x11, 0x85, 0x69, 0x3f, 0x11, 0x55, 0x69, 0x3f};
 
-UINT8 CfgTbl_Pas106i[] =
+static const u8 gaFelRFCon[RF_FEL_CON_LEN] = {0x11, 0x85, 0x69, 0x3f, 0x11, 0x55, 0x69, 0x3f};
+
+static const u8 CfgTbl_Pas106i[] =
 {
-    REG_MODE,        0x39,    // CRCPreset = 6363H
-    REG_TXMODE,      0x80,    // ISO/IEC 14443A/MIFARE and 106 kbit, TxCRCEn On
-    REG_RXMODE,      0x80,    // ISO/IEC 14443A/MIFARE and 106 kbit, RxCRCEn On   	
-    REG_BITFRAMING,  0x00,
-    REG_RFCFG,       0x59,
-    REG_GSNON,       0xF4,
-    REG_CWGSP,       0x3F,
-    REG_MANUALRCV,   0x00,
-    REG_TXAUTO,      0x43,
-    REG_DEMOD,       0x4D,
-    REG_RXTHRESHOLD, 0x55,
-    REG_MODWIDTH,    0x26,
-    REG_RXSEL,       0x84,
+    ModeReg,        0x39,    // CRCPreset = 6363H
+    TxModeReg,      0x80,    // ISO/IEC 14443A/MIFARE and 106 kbit, TxCRCEn On
+    RxModeReg,      0x80,    // ISO/IEC 14443A/MIFARE and 106 kbit, RxCRCEn On 		
+    BitFramingReg,  0x00,
+    RFCfgReg,       0x59,
+    GsNOnReg,       0xF4,
+    CWGsPReg,       0x3F,
+    ManualRCVReg,   0x00,
+    TxAutoReg,      0x43,
+    DemodReg,       0x4D,
+    RxThresholdReg, 0x55,
+    ModWidthReg,    0x26,
+    RxSelReg,       0x84,
     0x00
 };
 
-UINT8 CfgTbl_Pas212i[] =
+static const u8 CfgTbl_Pas212i[] =
 {
-    REG_MODE,       0xB8,    // CRCPreset = 0000H
-    REG_TXMODE,     0x92,
-    REG_RXMODE,     0x92,
-    REG_BITFRAMING, 0x00,
-    REG_GSNON,      0xF4,
-    REG_GSNOFF,     0x6F,
-    REG_MANUALRCV,  0x10,
-    REG_TXAUTO,     0x03,
-    REG_DEMOD,      0x41,
-    REG_TXBITPHASE, 0x8F,
-    REG_RXSEL,      0x84,
+    ModeReg,       0xB8,    // CRCPreset = 0000H
+    TxModeReg,     0x92,
+    RxModeReg,     0x92,
+    BitFramingReg, 0x00,
+    GsNOnReg,      0xF4,
+    GsNOffReg,     0x6F,
+    ManualRCVReg,  0x10,
+    TxAutoReg,     0x03,
+    DemodReg,      0x41,
+    TxBitPhaseReg, 0x8F,
+    RxSelReg,      0x84,
     0x00
 };
 
-UINT8 CfgTbl_Pas424i[] =
+static const u8 CfgTbl_Pas424i[] =
 {
-    REG_MODE,       0xB8,    // CRCPreset = 0000H
-    REG_TXMODE,     0xA2,
-    REG_RXMODE,     0xA2,
-    REG_BITFRAMING, 0x00,
-    REG_GSNON,      0xFF,
-    REG_GSNOFF,     0x6F,
-    REG_MANUALRCV,  0x10,
-    REG_TXAUTO,     0x03,
-    REG_DEMOD,      0x41,
-    REG_TXBITPHASE, 0x8F,
+    ModeReg,       0xB8,    // CRCPreset = 0000H
+    TxModeReg,     0xA2,
+    RxModeReg,     0xA2,
+    BitFramingReg, 0x00,
+    GsNOnReg,      0xFF,
+    GsNOffReg,     0x6F,
+    ManualRCVReg,  0x10,
+    TxAutoReg,     0x03,
+    DemodReg,      0x41,
+    TxBitPhaseReg, 0x8F,
     0x00
 };
 
-UINT8 CfgTbl_Act106i[] =
+static const u8 CfgTbl_Act106i[] =
 {
-    REG_MODE,        0x39,    // CRCPreset = 6363H
-    REG_TXMODE,      0x81,    // ISO/IEC 14443A/MIFARE and 106 kbit, TxCRCEn On
-    REG_RXMODE,      0x81,    // ISO/IEC 14443A/MIFARE and 106 kbit, RxCRCEn On 		
-    REG_BITFRAMING,  0x00,
-    REG_RFCFG,       0x59,
-    REG_GSNON,       0xF4,
-    REG_GSNOFF,      0x6F,
-    REG_CWGSP,       0x3F,
-    REG_MANUALRCV,   0x00,
-    REG_TXAUTO,      0xCB,    //
-    REG_DEMOD,       0x61,
-    REG_RXTHRESHOLD, 0x55,
-    REG_MODWIDTH,    0x26,
-    REG_TXBITPHASE,  0x8F,
+    ModeReg,        0x39,    // CRCPreset = 6363H
+    TxModeReg,      0x81,    // ISO/IEC 14443A/MIFARE and 106 kbit, TxCRCEn On
+    RxModeReg,      0x81,    // ISO/IEC 14443A/MIFARE and 106 kbit, RxCRCEn On 		
+    BitFramingReg,  0x00,
+    RFCfgReg,       0x59,
+    GsNOnReg,       0xF4,
+    GsNOffReg,      0x6F,
+    CWGsPReg,       0x3F,
+    ManualRCVReg,   0x00,
+    TxAutoReg,      0xCB,    //
+    DemodReg,       0x61,
+    RxThresholdReg, 0x55,
+    ModWidthReg,    0x26,
+    TxBitPhaseReg,  0x8F,
     0x00
 };
 
-UINT8 CfgTbl_Act212i[] =
+static const u8 CfgTbl_Act212i[] =
 {
-    REG_MODE,        0xB8,    // CRCPreset = 0000H
-    REG_TXMODE,      0x91,
-    REG_RXMODE,      0x91,
-    REG_BITFRAMING,  0x00,
-    REG_RFCFG,       0x69,
-    REG_GSNON,       0xFF,
-    REG_GSNOFF,      0x6F,
-    REG_CWGSP,       0x3F,
-    REG_MANUALRCV,   0x10,
-    REG_TXAUTO,      0x8B,
-    REG_DEMOD,       0x61,
-    REG_RXTHRESHOLD, 0x55,
-    REG_MODGSP,      0x11,
-    REG_TXBITPHASE,  0x8F,
+    ModeReg,        0xB8,    // CRCPreset = 0000H
+    TxModeReg,      0x91,
+    RxModeReg,      0x91,
+    BitFramingReg,  0x00,
+    RFCfgReg,       0x69,
+    GsNOnReg,       0xFF,
+    GsNOffReg,      0x6F,
+    CWGsPReg,       0x3F,
+    ManualRCVReg,   0x10,
+    TxAutoReg,      0x8B,
+    DemodReg,       0x61,
+    RxThresholdReg, 0x55,
+    ModGsPReg,      0x11,
+    TxBitPhaseReg,  0x8F,
     0x00
 };
 
-UINT8 CfgTbl_Act424i[] =
+static const u8 CfgTbl_Act424i[] =
 {
-    REG_MODE,        0xB8,    // CRCPreset = 0000H
-    REG_TXMODE,      0xA1,
-    REG_RXMODE,      0xA1,
-    REG_BITFRAMING,  0x00,
-    REG_RFCFG,       0x69,
-    REG_GSNON,       0xFF,
-    REG_GSNOFF,      0x6F,
-    REG_CWGSP,       0x3F,
-    REG_MANUALRCV,   0x10,
-    REG_TXAUTO,      0x8B,
-    REG_DEMOD,       0x61,
-    REG_RXTHRESHOLD, 0x55,
-    REG_MODGSP,      0x11,
-    REG_TXBITPHASE,  0x8F,
+    ModeReg,        0xB8,    // CRCPreset = 0000H
+    TxModeReg,      0xA1,
+    RxModeReg,      0xA1,
+    BitFramingReg,  0x00,
+    RFCfgReg,       0x69,
+    GsNOnReg,       0xFF,
+    GsNOffReg,      0x6F,
+    CWGsPReg,       0x3F,
+    ManualRCVReg,   0x10,
+    TxAutoReg,      0x8B,
+    DemodReg,       0x61,
+    RxThresholdReg, 0x55,
+    ModGsPReg,      0x11,
+    TxBitPhaseReg,  0x8F,
     0x00
 };
 
@@ -129,17 +124,12 @@ UINT8 CfgTbl_Act424i[] =
 
 
 
-/******************************************************************/
-//       Configure NFC Type
-/******************************************************************/
-static void NFCInitiatorRegConfig(UINT8 NFCType)
+static void nfc_init_config(u8 NFCType)
 {
-    UINT8 Addr;
-    UINT8 *pTable;
-    UINT8 i;
+    u8 Addr;
+    const u8 *pTable;
+    u8 i;
 
-
-    PrtMsg(DBGL1, "%s: start, NFCType = %02X\n", __FUNCTION__, NFCType);    
 
     switch(NFCType)
     {
@@ -149,18 +139,18 @@ static void NFCInitiatorRegConfig(UINT8 NFCType)
             break;
         case PASSDEPI_212:
         case PASSDEPT_212:
-            RegWrite(REG_MODGSP, gaFelRFCon[FEL2_CON_ModGsP]);
-            RegWrite(REG_RXTHRESHOLD, gaFelRFCon[FEL2_CON_RxThres]);
-            RegWrite(REG_RFCFG, gaFelRFCon[FEL2_CON_RFCfg]);
-            RegWrite(REG_CWGSP, gaFelRFCon[FEL2_CON_CWGsP]);
+            pn512_reg_write(ModGsPReg, gaFelRFCon[FEL2_CON_ModGsP]);
+            pn512_reg_write(RxThresholdReg, gaFelRFCon[FEL2_CON_RxThres]);
+            pn512_reg_write(RFCfgReg, gaFelRFCon[FEL2_CON_RFCfg]);
+            pn512_reg_write(CWGsPReg, gaFelRFCon[FEL2_CON_CWGsP]);
             pTable = CfgTbl_Pas212i;
             break;
         case PASSDEPI_424:
         case PASSDEPT_424:
-            RegWrite(REG_MODGSP, gaFelRFCon[FEL4_CON_ModGsP]);
-            RegWrite(REG_RXTHRESHOLD, gaFelRFCon[FEL4_CON_RxThres]);
-            RegWrite(REG_RFCFG, gaFelRFCon[FEL4_CON_RFCfg]);
-            RegWrite(REG_CWGSP, gaFelRFCon[FEL4_CON_CWGsP]);
+            pn512_reg_write(ModGsPReg, gaFelRFCon[FEL4_CON_ModGsP]);
+            pn512_reg_write(RxThresholdReg, gaFelRFCon[FEL4_CON_RxThres]);
+            pn512_reg_write(RFCfgReg, gaFelRFCon[FEL4_CON_RFCfg]);
+            pn512_reg_write(CWGsPReg, gaFelRFCon[FEL4_CON_CWGsP]);
             pTable = CfgTbl_Pas424i;
             break;
         case ACTDEPI_106:
@@ -180,19 +170,19 @@ static void NFCInitiatorRegConfig(UINT8 NFCType)
     Addr = pTable[i++];
     while(Addr) 
     {
-        RegWrite(Addr,pTable[i++]);
+        pn512_reg_write(Addr,pTable[i++]);
         Addr = pTable[i++];
     }
 }
-
+#if 0
 /*****************************************************************/
 //       START   A   PCD   transceive COMMAND 
 /*****************************************************************/
-static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIFOLen, UINT8 *recBuf, UINT8 *recLen, BOOL parityCheck)      
+static INT32 FelicaBulkTransceive(UINT8 *senBuf, UINT32 senLen, UINT32 MaxFirstFIFOLen, UINT8 *recBuf, UINT32 *recLen, BOOL parityCheck)      
 {
-    UINT8 ret = ERROR_NO;
-    UINT8 i = 0;
-    UINT8 tempLen;
+    INT32 ret = 0;
+    UINT32 i = 0;
+    UINT32 tempLen;
     UINT8 waitFor;
     UINT8 temp;
 
@@ -203,20 +193,20 @@ static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIF
     if(senLen)
     {
         tempLen = (senLen < MaxFirstFIFOLen) ? senLen : MaxFirstFIFOLen;
-        FIFOWrite(senBuf, tempLen);
+        pn512_fifo_write(senBuf, tempLen);
         senLen -= tempLen;
         i += tempLen;
     }
-    RegWrite(REG_COMMIRQ, 0x21);               // Clear the Rx Irq bit first
-    RegWrite(REG_COMMAND, CMD_TRANSCEIVE);
-    RegWrite(REG_BITFRAMING, 0x80);            // Start transmission
+    pn512_reg_write(REG_COMMIRQ, 0x21);               // Clear the Rx Irq bit first
+    pn512_reg_write(REG_COMMAND, CMD_TRANSCEIVE);
+    pn512_reg_write(REG_BITFRAMING, 0x80);            // Start transmission
 
     while(senLen)
     {
-        if(RegRead(REG_FIFOLEVEL) < 0x30)      // length < 48 ?
+        if(pn512_reg_read(REG_FIFOLEVEL) < 0x30)      // length < 48 ?
         {
             tempLen = (senLen < 0x0E) ? senLen : 0x0E;    // 0x0E ???
-            FIFOWrite(senBuf + i, tempLen);
+            pn512_fifo_write(senBuf + i, tempLen);
             senLen -= tempLen;
             i += tempLen;
         }
@@ -225,45 +215,45 @@ static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIF
     temp = 0;
     while((temp & 0x07) < 0x05)   //the value of the receicing is 110, Receving state
     {
-        temp = RegRead(REG_STATUS2);
-        PrtMsg(DBGL4, "%s: temp = %02X\n", __FUNCTION__, temp);
-        if(RegRead(REG_STATUS2) == 0x01)
+        temp = pn512_reg_read(REG_STATUS2);
+//        PrtMsg(DBGL4, "%s: temp = %02X\n", __FUNCTION__, temp);
+        if(temp == 0x01)
         {
-            SetRegBit(REG_BITFRAMING, BIT_STARTSEND);
+            pn512_reg_set(REG_BITFRAMING, BIT_STARTSEND);
         }
     }
 
     tempLen = 0;
     i = 0;
-    while(!(RegRead(REG_COMMIRQ) & 0x21))
+    while(!(pn512_reg_read(REG_COMMIRQ) & 0x21))
     {
-        tempLen = RegRead(REG_FIFOLEVEL);
+        tempLen = pn512_reg_read(REG_FIFOLEVEL);
         if(tempLen > 1)                            //  >10
         {
-            FIFORead(recBuf + i, tempLen);
+            pn512_fifo_read(recBuf + i, tempLen);
             i += tempLen;
             if(i > FELINFFIELDLEN)
             {
-                return(ERROR_FSDLENTH);
+                return(-ERROR_FSDLENTH);
             }
         }
     }
-    tempLen = RegRead(REG_FIFOLEVEL);
-    FIFORead(recBuf + i, tempLen);
+    tempLen = pn512_reg_read(REG_FIFOLEVEL);
+    pn512_fifo_read(recBuf + i, tempLen);
     i += tempLen;
     if(i > FELINFFIELDLEN)
     {
-        return(ERROR_FSDLENTH);
+        return(-ERROR_FSDLENTH);
     }
     
     *recLen = i;
-    if(RegRead(REG_COMMIRQ) & 0x01) 
+    if(pn512_reg_read(REG_COMMIRQ) & 0x01) 
     {
-        ret = ERROR_NOTAG;         // Time Out Error
+        ret = -ERROR_NOTAG;         // Time Out Error
     }
    	else
    	{
-        waitFor = RegRead(REG_ERROR) & 0x17;
+        waitFor = pn512_reg_read(REG_ERROR) & 0x17;
         if(waitFor)  
         { 
             if(parityCheck)
@@ -271,23 +261,23 @@ static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIF
                 if(waitFor & BIT_PARITYERR)
                 {  
                     // parity error
-                   	ret = ERROR_PARITY;
+                   	ret = -ERROR_PARITY;
                 }        
             }
             if(waitFor & BIT_PROTOCOLERR) 
             {  
                 // protocol error
-                ret = ERROR_PROTOCOL;
+                ret = -ERROR_PROTOCOL;
             }
             if(waitFor & BIT_BUFFEROVFL) 
             { 
                 // FIFO overflow
-                FIFOFlush();
-                ret = ERROR_BUFOVFL;
+                pn512_reg_write(REG_FIFOLEVEL, 0x80);
+                ret = -ERROR_BUFOVFL;
             }
             if(waitFor & BIT_CRCERR) 
             {
-                 ret = ERROR_CRC;
+                 ret = -ERROR_CRC;
             }
         }
     }
@@ -296,109 +286,127 @@ static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIF
 
     return(ret);
 }
-
+#endif
 
 
 /******************************************************************/
 //       Configure NFC Type
 /******************************************************************/
-static UINT8 FelREQC(UINT8 timeSlot, UINT16 SystemCode)
+static int felica_request_REQC(struct picc_device *picc, u8 timeSlot, u16 SystemCode)
 {
-    UINT8 ret;
-    UINT8 tempLen = 0;
-    UINT8 tempBuf[20];
+    int ret;
+    u8 tempBuf[20];
+	struct pn512_request	*req = picc->request;
 
 
-    PrtMsg(DBGL1, "%s: start, timeSlot = %02X, systemCode = %02X\n", __FUNCTION__, timeSlot, SystemCode);   
+    pn512_reg_set(TxAutoReg, InitialRFOn);    // Enable RF initial on
+    pn512_reg_set(TxModeReg, TxCRCEn);    // Enable TxCRC, 
+    pn512_reg_set(RxModeReg, RxCRCEn);
+    pn512_reg_set(RxModeReg, RxMultiple);    // Enable RxCRC, Rx Mutiple
+    pn512_reg_clear(Status2Reg, MFCrypto1On);              // Disable crypto 1 unit
 
-    SetRegBit(REG_TXAUTO, BIT_INIRFON);    // Enable RF initial on
-    SetRegBit(REG_TXMODE, BIT_TXCRCEN);    // Enable TxCRC, 
-    SetRegBit(REG_RXMODE, BIT_RXCRCEN);
-    SetRegBit(REG_RXMODE, BIT_RXMULTIPLE);    // Enable RxCRC, Rx Mutiple
-    ClearRegBit(REG_STATUS2, BIT_MFCRYPTO1ON);              // Disable crypto 1 unit
+    pn512_reg_read(TxAutoReg);
+    pn512_reg_read(TxModeReg);
+    pn512_reg_read(RxModeReg);
+    pn512_reg_read(Status2Reg);
 
-    RegRead(REG_TXAUTO);
-    RegRead(REG_TXMODE);
-    RegRead(REG_RXMODE);
-    RegRead(REG_STATUS2);
 
-    FIFOFlush();
-    // REQC command format
-    tempBuf[0] = 0x06;                 // 0x06
-    tempBuf[1] = CMD_REQC;             // command code
-    tempBuf[2] = SystemCode >> 8;        // system code high byte
-    tempBuf[3] = SystemCode;           // system code low byte
-    tempBuf[4] = 0x00;                 // reserved byte, 0x00
-    tempBuf[5] = timeSlot;             // time slot number
-    SetTimer100us(8000);            // timeout 8ms
-    ret = FelicaBulkTransceive(tempBuf, 0x06, MAX_FIFO_LENGTH, tempBuf, &tempLen, FLAG_NOPARITYCHECK);
-    ClearRegBit(REG_RXMODE, BIT_RXMULTIPLE);
-    if((ret == ERROR_NO) || (ret == ERROR_NOTAG) || (ret == ERROR_CRC))
+	req->buf[0] = 0x06;
+	req->buf[1] = CMD_REQC;
+	req->buf[2] = SystemCode >> 8;
+	req->buf[3] = SystemCode;
+	req->buf[4] = 0x00;
+	req->buf[5] = timeSlot;
+	req->length = 6;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 8000;
+	
+	picc_wait_for_req(req);
+	memcpy(tempBuf, req->buf, req->actual);
+	ret = req->error_code;
+
+//	TRACE_TO("%s ret=%d\n", __func__, req->error_code);
+	
+    pn512_reg_clear(RxModeReg, RxMultiple);
+    if((!ret) || (ret == -ERROR_NOTAG) || (ret == -ERROR_CRC))
     {
-        if(tempLen < 0x12)
+		if(req->actual < 0x12)
         {
-            return(ERROR_BYTECOUNT);
+            ret = -ERROR_BYTECOUNT;
+			goto err;
         }
         if(((tempBuf[0] != 0x12) && (tempBuf[0] != 0x14)) || (tempBuf[1] != RES_REQC))
         {
-            return(ERROR_WRONGPARAM);
+            ret = -ERROR_WRONGPARAM;
+			goto err;
         }
         
-        memcpy(picc.sn, tempBuf + 2, 8);    // NFCID2, 8 bytes
+        memcpy(picc->sn, tempBuf + 2, 8);    // NFCID2, 8 bytes
 
-        PrtMsg(DBGL5, "%s: has found a felica tag\n", __FUNCTION__);
-        PrtMsg(DBGL5, "NFCID: %02X, %02X, %02X, %02X, %02X, %02X, %02X, %02X\n", tempBuf[2], tempBuf[3], tempBuf[4], tempBuf[5], tempBuf[6], tempBuf[7], tempBuf[8], tempBuf[9]);
-        picc.snLen = 8;
-        memcpy(picc.PAD, tempBuf + 10, 8);
+        INFO_TO("NFCID: %02X %02X %02X %02X %02X %02X %02X %02X\n", 
+        		tempBuf[2], tempBuf[3], tempBuf[4], tempBuf[5], tempBuf[6], tempBuf[7], tempBuf[8], tempBuf[9]);
+
+		picc->sn_len = 8;
+        memcpy(picc->PAD, tempBuf + 10, 8);
         if(tempBuf[0] == 0x14)
         {
-            memcpy(picc.sysCode, tempBuf + 18, 2);
+            memcpy(picc->system_code, tempBuf + 18, 2);
         }
+
+		ret = 0;
     }
-    
+
+err:
+//	TRACE_TO("exit %s\n", __func__);
+	
     return(ret);
 }
 
-
-
-
-void PollFeliCaTags(UINT8 feliType)
+void felica_polling_tags(struct picc_device *picc, u8 feliType)
 {
-    PrtMsg(DBGL1, "%s: start\n", __FUNCTION__);
 
-    NFCInitiatorRegConfig(feliType);
+//	TRACE_TO("enter %s\n", __func__);
 
-    if (FelREQC(CODE_TIMESLOTNUMBER_1, feliSysCode) == ERROR_NO)
+    nfc_init_config(feliType);
+
+    if (!felica_request_REQC(picc, CODE_TIMESLOTNUMBER_1, FELICA_APPLICATION_ALL))
     {
         if (feliType == PASSDEPI_212)
         {
-            picc.type = PICC_FELICA212;
-            pcd.curSpeed |= 0x09;        // ~ 212 kbit/s)
+            picc->type = PICC_FELICA212;
+			picc->name = "felica 212";
+            picc->pcd->current_speed |= 0x09;        // ~ 212 kbit/s)
         }
         else
         {
-            picc.type = PICC_FELICA424;
-            pcd.curSpeed |= 0x12;        // ~ 424 kbit/s)
+            picc->type = PICC_FELICA424;
+			picc->name = "felica 414";
+            picc->pcd->current_speed |= 0x12;        // ~ 424 kbit/s)
         }
     }
     else
     {
-        picc.type = PICC_ABSENT;
+        picc->type = PICC_ABSENT;
+		picc->name = "none";
     }
+
+//	TRACE_TO("exit %s\n", __func__);
 }
 
 /*********************************************/
 //    Set the PN512 timer clock for FeliCa use
 /********************************************/
-static void FelTimerSet(UINT8 *FelCommandBuf)
+static void felica_timer_set(struct picc_device *picc, u8 *FelCommandBuf)
 {
-    UINT8 timeout;
-    UINT8 TempN;
-    UINT16  ReloadVal;
+    u8 timeout;
+    u8 TempN;
+    u16  ReloadVal;
     
 
-    RegWrite(REG_TMODE, 0x88);         //TAuto=1,TAutoRestart=0,TPrescaler=2047=7FFh
-    RegWrite(REG_TPRESCALER, 0x00);    // Indicate 302us per timeslot
+    pn512_reg_write(TModeReg, 0x88);         //TAuto=1,TAutoRestart=0,TPrescaler=2047=7FFh
+    pn512_reg_write(TPrescalerReg, 0x00);    // Indicate 302us per timeslot
 
     if((FelCommandBuf[1]&0x01) || (FelCommandBuf[1]>0x17))
     {
@@ -409,43 +417,43 @@ static void FelTimerSet(UINT8 *FelCommandBuf)
     {
         if(FelCommandBuf[1] == CMD_REQRESPONSE)
         {
-            timeout = picc.PAD[3];
+            timeout = picc->PAD[3];
             TempN = 0;
         }
         else if(FelCommandBuf[1] == CMD_REQSERVICE)
         {
-            timeout = picc.PAD[2];
+            timeout = picc->PAD[2];
             TempN = FelCommandBuf[10];                 //Number of service
         }
         else if(FelCommandBuf[1] == CMD_READFROMSECURE)
         {
-            timeout = picc.PAD[5];
+            timeout = picc->PAD[5];
             TempN = FelCommandBuf[10];                 // Number of service
         }
         else if(FelCommandBuf[1] == CMD_WRITETOSECURE)
         {
-            timeout = picc.PAD[6];
+            timeout = picc->PAD[6];
             TempN = FelCommandBuf[10];                 // Number of service
         }
         else if(FelCommandBuf[1] == CMD_READ_NONEAUTH)
         {
-            timeout = picc.PAD[5];
+            timeout = picc->PAD[5];
             TempN = FelCommandBuf[10+FelCommandBuf[10]*2];   //Number of Blocks
         }
         else if(FelCommandBuf[1] == CMD_WRITE_NONEAUTH)
         {
-            timeout = picc.PAD[6];
+            timeout = picc->PAD[6];
             TempN = FelCommandBuf[10+FelCommandBuf[10]*2];   //Number of Blocks
         }
         else if(FelCommandBuf[1] == CMD_AUTH1)
         {
-            timeout = picc.PAD[4];
+            timeout = picc->PAD[4];
             TempN = FelCommandBuf[10+FelCommandBuf[10]*2];  
             TempN += FelCommandBuf[10];
         }
         else if(FelCommandBuf[1] == CMD_AUTH2)
         {
-            timeout = picc.PAD[4];
+            timeout = picc->PAD[4];
             TempN = 0;
         }
         else
@@ -468,108 +476,144 @@ static void FelTimerSet(UINT8 *FelCommandBuf)
         TempN = 1;
     }
     ReloadVal *= TempN;
-    RegWrite(REG_TRELOADVAL_HI, (UINT8)(ReloadVal >> 8));
-    RegWrite(REG_TRELOADVAL_LO, (UINT8)ReloadVal);
-    RegWrite(REG_COMMIRQ, 0x01);                           // Clear the TimerIrq bit
+    pn512_reg_write(TReloadVal_Hi, (u8)(ReloadVal >> 8));
+    pn512_reg_write(TReloadVal_Lo, (u8)ReloadVal);
+    pn512_reg_write(CommIRqReg, 0x01);                           // Clear the TimerIrq bit
 }
 
 
-UINT8 FelReqResponse(void)
+int felica_request_response(struct picc_device *picc)
 {
-    UINT8 ret;
-    UINT8 tempLen = 0;
-    UINT8 tempBuf[10];
-    
+    int ret = 0;
+    u8 tempBuf[11];
+	struct pn512_request	*req = picc->request;
 
-    FIFOFlush();
 
-    // request response command
-    tempBuf[1] = CMD_REQRESPONSE;                      // command code: 04
-    memcpy(tempBuf + 2, picc.sn, picc.snLen);          // NFCID2: 8 bytes
-    tempBuf[0] = picc.snLen + 2;
-    FelTimerSet(tempBuf);
-    ret = FelicaBulkTransceive(tempBuf, tempBuf[0], MAX_FIFO_LENGTH, tempBuf, &tempLen, FLAG_NOPARITYCHECK);
-    if(ret == ERROR_NO)
+//	TRACE_TO("enter %s\n", __func__);
+
+	req->buf[0] = tempBuf[0] = picc->sn_len + 2;
+	req->buf[1] = tempBuf[1] = CMD_REQRESPONSE;
+	memcpy(req->buf+2, picc->sn, picc->sn_len);
+	req->length = picc->sn_len+2;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 0;
+	felica_timer_set(picc, tempBuf);
+	picc_wait_for_req(req);
+
+
+    if(!req->error_code)
     {
-        if(tempLen != 0x0B)
+		if(req->actual != 11)
         {
-            return(ERROR_BYTECOUNT);
+            ret = -ERROR_BYTECOUNT;
+			goto err;
         }
-        if((tempBuf[0]!=0x0B) || (tempBuf[1] != RES_REQRESPONSE))
+        if((req->buf[0] != 11) || (req->buf[1] != RES_REQRESPONSE))
         {
-            ret = ERROR_WRONGPARAM;
+            ret = -ERROR_WRONGPARAM;
+			goto err;
         }
     }
-    
+
+	ret = req->error_code;
+
+err:
+	
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
+	
     return(ret);
 }
 
 
-
-UINT8 FelXfrHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)
+#if 0
+int FelXfrHandle(struct piccInfo *picc, UINT8 *cmdBuf, UINT32 cmdLen, UINT8 *resBuf, UINT32 *resLen)
 {
-    UINT8 ret = SLOT_NO_ERROR;
-    UINT8 tempLen = 0;
+//    INT32 ret = 0;
+    UINT32 tempLen = 0;
+	struct pn512_request	*req = &picc->request;
 
 
-    FIFOFlush();
+//    FIFOFlush();
     if(cmdLen > FELINFFIELDLEN)
     {
         resBuf[0] = 0x67;
         resBuf[1] = 0x00;
         *resLen = 2;
-        return(SLOT_NO_ERROR);
+        return(0);
     }
     
-    FelTimerSet(cmdBuf);
-    ret = FelicaBulkTransceive(cmdBuf, (UINT8)cmdLen, MAX_FIFO_LENGTH, resBuf, &tempLen, FLAG_PARITYCHECK);
-    if(ret == ERROR_NO)
+//    FelTimerSet(cmdBuf);
+//    ret = FelicaBulkTransceive(cmdBuf, cmdLen, MAX_FIFO_LENGTH, resBuf, &tempLen, FLAG_PARITYCHECK);
+
+	memcpy(req->buf, cmdBuf, cmdLen);
+	req->length = cmdLen;
+	req->actual = 0;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 0;
+	FelTimerSet(picc, cmdBuf);
+	picc_wait_for_req(req);
+
+//    if(!ret)
+	if(!req->error_code)
     {
         *resLen = tempLen;
-         ret = SLOT_NO_ERROR;
+//         ret = 0;
     }
     else
     {
         resBuf[0] = 0x64;
         resBuf[1] = 0x01;
         *resLen = 2;
-        ret = SLOT_NO_ERROR;
+//        ret = 0;
     }
     
-    return(ret);
+    return 0;
 }
+#endif
 
-
-UINT8 FelTransmisionHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)
+int felica_xfr_handler(struct picc_device *picc, u8 *cmdBuf, u32 cmdLen, u8 *resBuf, u32 *resLen)
 {
-    UINT8 ret = SLOT_NO_ERROR;
-    UINT8 tempLen = 0;
-    
+	struct pn512_request	*req = picc->request;
 
-    FIFOFlush();
+	
+//	TRACE_TO("enter %s\n", __func__);
+
     if(cmdLen > 254)
     {
         resBuf[0] = 0x67;
         resBuf[1] = 0x00;
         *resLen = 2;
-        return(SLOT_NO_ERROR);
+        return(0);
     }
-    FelTimerSet(cmdBuf);
-    ret = FelicaBulkTransceive(cmdBuf, (UINT8)cmdLen, MAX_FIFO_LENGTH, resBuf, &tempLen, FLAG_NOPARITYCHECK);
-    if(ret == ERROR_NO)
+
+	memcpy(req->buf, cmdBuf, cmdLen);
+	req->length = cmdLen;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 0;
+	felica_timer_set(picc, cmdBuf);
+	picc_wait_for_req(req);
+
+	if(!req->error_code)
     {
-        *resLen = tempLen;
-        ret = SLOT_NO_ERROR;
+    	memcpy(resBuf, req->buf, req->actual);
+        *resLen = req->actual;
     }
     else
     {
         resBuf[0] = 0x64;
         resBuf[1] = 0x01;
         *resLen   = 2;
-        ret       = SLOT_NO_ERROR;
     }
-    
-    return(ret);
+
+//	TRACE_TO("exit %s, ret=%d, actual=%d\n", __func__, req->error_code, req->actual);
+	
+    return 0;
 }
 
 

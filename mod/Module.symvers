@@ -1,0 +1,2 @@
+0xc0167b15	ccid_picc_init	/opt/acr890/pcd/mod/pcdm	EXPORT_SYMBOL
+0xeace212b	ccid_picc_uninit	/opt/acr890/pcd/mod/pcdm	EXPORT_SYMBOL

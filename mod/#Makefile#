@@ -1,0 +1,32 @@
+
+
+
+#CROSS_COMPILE=/opt/acr910/arm-eabi-4.4.3/bin/arm-linux-
+CROSS_COMPILE=/opt/DevKit8500/arm-eabi-4.4.0/bin/arm-eabi-
+AR=$(CROSS_COMPILE)ar
+export ARCH=arm
+LD=$(CROSS_COMPILE)ld
+CC=$(CROSS_COMPILE)gcc
+LOCAL_CFLAGS := -O0 -g 
+LOCAL_STRIP_MODULE := false
+DEBFLAGS=-02
+PWD := $(shell pwd)
+src:=src
+
+obj-m := pcdm.o
+pcdm-objs :=crc.o delay.o felica.o mifare.o \
+		part4.o pcd.o pcsc.o typeB.o pn512app.o\
+		picc.o pn512.o topaz.o typeA.o
+
+#KERNELDIR?=/opt/acr910/kernel/
+KERNELDIR?=/opt/DevKit8500/linux-2.6.32/
+
+modules:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD)
+	@echo 'copy pcdm.ko to share file folder'
+	@cp -f *.ko /mnt/hgfs/sharefiles
+	@echo 'Module pcdm.ko already generated'
+
+clean:
+	rm -rf $(srcdir)*.o $(srcdir)*.mod.o $(srcdir)*.ko $(srcdir)*.mod.c \
+	*.o *.mod.o *.ko *.mod.c *.symvers *.order

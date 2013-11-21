@@ -1,23 +1,25 @@
 
-
-
 #include "common.h"
-#include "topaz.h"
 
 
 
-void CRCReg_Update(UINT8 ch, UINT16 *IpwCrc)
+
+#define CRC_A    1
+#define CRC_B    2
+
+
+void CRCReg_Update(u8 ch, u16 *IpwCrc)
 {
 
 
-    ch ^= (UINT8)(*IpwCrc & 0x00FF);
+    ch ^= (u8)(*IpwCrc & 0x00FF);
     ch ^= (ch << 4);
-    *IpwCrc = (*IpwCrc >> 8)^((UINT16)ch << 8)^((UINT16)ch << 3)^((UINT16)ch >> 4);
+    *IpwCrc = (*IpwCrc >> 8)^((u16)ch << 8)^((u16)ch << 3)^((u16)ch >> 4);
 }
 
-void ComputeCrc(UINT8 CRCType, UINT8 *Data, UINT16 Length, UINT8 *TransmitFirst, UINT8 *TransmitSecond)
+void ComputeCrc(u8 CRCType, u8 *Data, u32 Length, u8 *TransmitFirst, u8 *TransmitSecond)
 {
-    UINT16 wCrc;
+    u16 wCrc;
 
 
     switch(CRCType) 
@@ -42,7 +44,7 @@ void ComputeCrc(UINT8 CRCType, UINT8 *Data, UINT16 Length, UINT8 *TransmitFirst,
         wCrc = ~wCrc;         // ISO/IEC 13239 (formerly ISO/IEC 3309)
     }
     
-    *TransmitFirst = (UINT8)(wCrc & 0xFF);
-    *TransmitSecond = (UINT8)((wCrc >> 8) & 0xFF);
+    *TransmitFirst = (u8)(wCrc & 0xFF);
+    *TransmitSecond = (u8)((wCrc >> 8) & 0xFF);
 }
 

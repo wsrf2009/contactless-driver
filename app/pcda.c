@@ -37,10 +37,11 @@ typedef struct
     unsigned char *p_oBuf;
     unsigned int  iDataLen;
     unsigned int  oDataLen;
-
+    unsigned int statusCode;
 }IFD_PARAM;
 
 IFD_PARAM UsrParam;
+
 
 
 
@@ -130,6 +131,10 @@ void CardOPeration(int choice1, unsigned char slot)
     int i;
     int TempLen;
     int choice2;
+    unsigned char tmpData;
+    unsigned char n;
+    char *preCmd = NULL;
+    char *curPro;
 
     UsrParam.p_oBuf = RecBuf;
     UsrParam.p_iBuf = CmdBuf;
@@ -151,15 +156,20 @@ void CardOPeration(int choice1, unsigned char slot)
         {
             do
             {
-                printf("Exchange Apdu with slot%d:\n",slot);
+                printf("\n\nExchange Apdu with slot%d:\n",slot);
                 printf("==============================================\n\n");
-                printf("1: Mifare Desfire Test\n");
-                printf("2: Felica Test 1\n");
-                printf("3: Felica Test 2\n");
-                printf("4: Felica Test 3\n");
-                printf("5: Felica Test 4\n");
-                printf("6: Mifare 1k Test\n");
-                printf("7: TypeB Test2\n");
+                printf("1: mifare desfire test\n");
+                printf("2: felica test1\n");
+                printf("3: felica test2\n");
+                printf("4: mifare 1k test\n");
+				printf("5: typeB test1\n");
+                printf("6: typeB test2\n");
+				printf("7: mifare ultralight C test1\n");
+				printf("8: mifare 4k test1\n");
+				printf("9: mifare 4k Test2\n");
+				printf("A: mifare ultralight C test2\n");
+				printf("B: topaz test\n");
+				printf("C: jcop30 test\n");
                 printf("\n");
                 printf("0: Exit the test program\n\n");
                 printf("==============================================\n\n");
@@ -172,6 +182,7 @@ void CardOPeration(int choice1, unsigned char slot)
 
                 if(choice2 == '1')
                 {
+		    		curPro = "mifare desfire test";
                     txtfd = fopen("desfire.txt","r");
                     if(txtfd == NULL)
                     {
@@ -180,52 +191,103 @@ void CardOPeration(int choice1, unsigned char slot)
                 }
                 else if(choice2 == '2')
                 {
-                    txtfd = fopen("felicaTest1.txt","r");
-                    if(txtfd == NULL)
-                    {
-                        printf("fail to open the file: felicaTest1.txt\n");
-                    }
-                }
-                else if(choice2 == '3')
-                {
-                    txtfd = fopen("felicaTest2.txt","r");
-                    if(txtfd == NULL)
-                    {
-                        printf("fail to open the file: felicaTest2.txt\n");
-                    }
-                }
-                else if(choice2 == '4')
-                {
+		    		curPro = "felica test1";
                     txtfd = fopen("felicaTest3.txt","r");
                     if(txtfd == NULL)
                     {
                         printf("fail to open the file: felicaTest3.txt\n");
                     }
                 }
-                else if(choice2 == '5')
+                else if(choice2 == '3')
                 {
+		   			curPro = "felica test2";
                     txtfd = fopen("felicaTest4.txt","r");
                     if(txtfd == NULL)
                     {
                         printf("fail to open the file: felicaTest4.txt\n");
                     }
                 }
-                else if(choice2 == '6')
+                else if(choice2 == '4')
                 {
-                    txtfd = fopen("mifare1k.txt","r");
+					curPro = "mifare 1k test";
+                    txtfd = fopen("mifare1K.txt","r");
                     if(txtfd == NULL)
                     {
-                        printf("fail to open the file: mifare1k.txt\n");
+                        printf("fail to open the file: mifare1K.txt\n");
                     }
-                }               
-                else if(choice2 == '7')
+                }    
+                else if(choice2 == '5')
                 {
-                    txtfd = fopen("typeBTest2.txt","r");
+		    		curPro = "typeB test1";
+                    txtfd = fopen("typeBTest1_ezLink.txt","r");
                     if(txtfd == NULL)
                     {
-                        printf("fail to open the file: typeBTest2.txt\n");
+                        printf("fail to open the file: typeBTest1_ezLink.txt\n");
                     }
                 }
+                else if(choice2 == '6')
+                {
+		    		curPro = "typeB test2";
+                    txtfd = fopen("typeBTest2_ezLink.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: typeBTest2_ezLink.txt\n");
+                    }
+                }
+                else if(choice2 == '7')
+                {
+		    		curPro = "mifare ultralight C test1";
+                    txtfd = fopen("mifareUltralightTest1.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: mifareUltralightTest1.txt\n");
+                    }
+                }
+                else if(choice2 == '8')
+                {
+		    		curPro = "mifare 4k test1";
+                    txtfd = fopen("mifare4KTest1.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: mifare4KTest1.txt\n");
+                    }
+                }
+                else if(choice2 == '9')
+                {
+		    		curPro = "mifare 4k Test2";
+                    txtfd = fopen("mifare4KTest2.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: mifare4KTest2.txt\n");
+                    }
+                }
+                else if(choice2 == 'A')
+                {
+		    		curPro = "mifare ultralight C test2";
+                    txtfd = fopen("mifareUltralightTest2.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: mifareUltralightTest2.txt\n");
+                    }
+                }
+                else if(choice2 == 'B')
+                {
+		    		curPro = "topaz test2";
+                    txtfd = fopen("topazTest.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: topazTest.txt\n");
+                    }
+                }
+                else if(choice2 == 'C')
+                {
+		    		curPro = "jcop30 test2";
+                    txtfd = fopen("jcop30Test.txt","r");
+                    if(txtfd == NULL)
+                    {
+                        printf("fail to open the file: jcop30Test.txt\n");
+                    }
+                }                
                 
                 if(txtfd != NULL)
                 {
@@ -242,6 +304,8 @@ void CardOPeration(int choice1, unsigned char slot)
                         }
                         else if(strstr(fbuf, "Command:") != NULL)
                         {
+			    			preCmd = "Command:";
+			    
                             pBuf = fbuf + 9;
                             i = 0;
                             while(*pBuf != '\n' && *pBuf != ' ')
@@ -255,76 +319,87 @@ void CardOPeration(int choice1, unsigned char slot)
                             UsrParam.iDataLen = i;
                             UsrParam.oDataLen = 271;
 
-                            PrtMsg("\n\nCMD Len: %d\n", UsrParam.iDataLen);
-                            PrtMsg("slot%d CMD:", slot);
-                            for(i = 0; i < UsrParam.iDataLen; i++ )
-                            {
-                                PrtMsg("0x%02X ", UsrParam.p_iBuf[i]);
-                            }
-                            PrtMsg("\n\n");
+			    			PrtMsg("%s",fbuf);
 
                             if((retval = ioctl(fd, PCD_CMD(XfrAPDU, slot), &UsrParam)) < 0)
                             {
-                                PrtMsg("\nOperation fail with errorcode = %lX\n", retval);
-                                break;
+                                PrtMsg("\nOperation fail with errorcode = %08X\n", UsrParam.statusCode);
+                                goto err;
                             }
                             else
                             {
-
-                                PrtMsg("Response Length: %d\n", UsrParam.oDataLen);
-                                PrtMsg("Response Data:");
+                                PrtMsg("Response: ");
                                 for(i = 0; i < UsrParam.oDataLen; i++ )
                                 {
-                                    PrtMsg("0x%02X ", RecBuf[i]);
+                                    PrtMsg("%02X ", RecBuf[i]);
                                 }
                                 PrtMsg("\n\n");
-
-                                fgets(fbuf, 1024, txtfd);
-                                if(strstr(fbuf, "Response:") != NULL)
-                                { 
-                                    pBuf = fbuf + 10;
-                                    i = 0;
-                                    while(*pBuf != '\n' && *pBuf != ' ')
-                                    {
-                                        if(*pBuf == 'x' || *pBuf == 'X');
-                                        else
-                                        {
-                                            if(RecBuf[i] != StrToHex(pBuf, 2))
-                                            { 
-                                                goto exchangefail;
-                                            }
-                                        }
-                                        pBuf += 3;
-                                        i++;
-                                    }
-                                    TempLen = i;
-
-                                    if(TempLen == UsrParam.oDataLen)
-                                    {
-                                        PrtMsg("Success to Exchange with the slot%d!\n", slot);
-                                        PrtMsg("\n\n");
-                                    }
-                                    else
-                                    {
-exchangefail:
-                                        PrtMsg("Fail to Exchange with the slot%d!\n", slot);
-                                        PrtMsg("The expected data:\n");
-                                        PrtMsg("%s",fbuf);
-                                        PrtMsg("\n\n");
-                                        break;
+			    			}
+						}
+                        else if(strstr(fbuf, "Response:") != NULL)
+                        { 
+			    			if(strcmp(preCmd, "Command:") != 0)
+			      			goto err;
+			    
+			    			preCmd = "Response:";
+			    
+                            pBuf = fbuf + 10;
+                            i = 0;
+			    			n = 0;
+			    			while((*pBuf != '\n') && (*pBuf != ' ') && (*pBuf != '\0') && (*pBuf != 0))
+			    			{
+								if(*pBuf == 'x' || *pBuf == 'X')
+								{
+								#if 0
+				    				pBuf++;
+				    				n++;
+				    				if(n == 2)
+				    				{
+										n = 0;
+										pBuf++;
+										i++;
+				    				}
+								#endif
+								}
+                                else
+                                {
+				    				tmpData = StrToHex(pBuf, 2);
+                                    if(RecBuf[i] != tmpData)
+                                    { 
+										printf("faild at index = %d, card data = %02X, expect data = %02X\n\n", 
+													i, RecBuf[i], tmpData);
+                                        	goto exchangefail;
                                     }
                                 }
+                                pBuf += 3;
+                                i++;
+			     			}
+                            TempLen = i;
+
+                            if(TempLen != UsrParam.oDataLen)
+                            {
+exchangefail:                  PrtMsg("expect %s", fbuf);
+                                 PrtMsg("\n");
+                                 goto err;
                             }
                         }
                     }
+                    
+                    printf("^_^ %s sucessfully ^_^\n\n", curPro);
                 }
+                else
+				{
+err:
+		    		printf("@_@ %s failed @_@\n\n", curPro);
+				}
+                
             
             }while(choice2 != '0');
-  }
+		}
         break;
 
         default:
-            printf("Invalid selection: %d\n",choice1);
+            printf("Invalid selection: %d\n", choice1);
     }
 }
 

@@ -6,130 +6,107 @@
 
 
 #include "common.h"
-#include "mifare.h"
-#include "typeA.h"
 #include "picc.h"
-#include "pn512app.h"
-#include "pn512.h"
-#include "delay.h"
+#include "mifare.h"
+#include "iso14443_typeA.h"
 #include "debug.h"
 
 
-UINT8 PICC_MIFARE_KEY[2][6] = 
-{ 
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-};
-
-struct mifareInfo mifare;
-
-
-
-/*****************************************************************/
-//       Mifare select
-/****************************************************************/
-UINT8 MifareSelect(void)
+int mifare_select(struct picc_device *picc)
 {
-    UINT8 ret;
-    UINT8 i;
-    UINT8 tempUIDLength;
-    UINT8 tempUID[5];
-    UINT8 level = 0;
+    int ret;
+    u8 i;
+    u8 tempUIDLength;
+    u8 tempUID[5];
+    u8 level = 0;
 
 
-//    PrtMsg(DBGL6, "%s: start\n", __FUNCTION__);   
+//	TRACE_TO("enter %s\n", __func__);   
 
-    ret = PcdRequestA(PICC_WUPA, (UINT8*)picc.ATQA);
-    if(ret == ERROR_NOTAG)
+    ret = typeA_request(picc, PICC_WUPA);
+    if(ret == -ERROR_NOTAG)
     {
-        ret = PcdRequestA(PICC_WUPA, (UINT8*)picc.ATQA);
+        ret = typeA_request(picc, PICC_WUPA);
     }
-    if(ret != ERROR_NOTAG)
+    if(ret != -ERROR_NOTAG)
     {
-        tempUIDLength = picc.snLen;
+        tempUIDLength = picc->sn_len;
         i = 0;
         while(tempUIDLength)
         {
             if(tempUIDLength == 4)
             {
-                memcpy(tempUID, picc.sn + i, 4);
+                memcpy(tempUID, picc->sn + i, 4);
                 tempUIDLength -= 4;
             }
             else
             {
                 tempUID[0] = 0x88;
-                memcpy(tempUID + 1, picc.sn + i,3);
+                memcpy(tempUID + 1, picc->sn + i, 3);
                 tempUIDLength -= 3;
                 i += 3;
             }
 
-            ret = PiccCascSelect(selectCmd[level], tempUID, (UINT8*)&(picc.SAK));
+            ret = typeA_cascade_select(picc, selectCmd[level], tempUID);
             level++;
         }
     }
-    if(ret == ERROR_NO)
+    if(!ret)
     {
-        mifare.authNeed = 0x01;
-        picc.states = PICC_SELECTED;
+        picc->authen_need = 0x01;
+        picc->states = PICC_SELECTED;
     }
 
-//    PrtMsg(DBGL6, "%s: exit, ret = %02X\n", __FUNCTION__, ret);
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
 
     return(ret);
 }
 
 
-static UINT8 MifareAuthentAnalyze(UINT8 *MFAuthKey)
+static int mifare_authen_analyze(struct picc_device *picc, u8 *MFAuthKey)
 {
-//    UINT8 i;
-    UINT8 ret;
+    int ret = 0;
+	struct pn512_request	*req = picc->request;
 
+//	TRACE_TO("enter %s\n", __func__);
 
-    PrtMsg(DBGL6, "%s: start\n", __FUNCTION__);
-
-    FIFOFlush();        // Empty FIFO
-    RegWrite(REG_FIFODATA, mifare.keyType);
-    RegWrite(REG_FIFODATA, mifare.block);
-    FIFOWrite(MFAuthKey, 6);
-
-    if(picc.snLen == 7)
-    {
-        FIFOWrite(&picc.sn[3], 4);
-    }
+	req->buf[0] = picc->key_type;
+	req->buf[1] = picc->block;
+	memcpy(req->buf+2, MFAuthKey, 6);
+    if(picc->sn_len == 7)
+    	memcpy(req->buf+8, &picc->sn[3], 4);
     else
-    {
-        FIFOWrite(picc.sn, 4);
-    }
+    	memcpy(req->buf+8, picc->sn, 4);
 
-    SetTimer100us(3000);
-    ret = PcdHandlerCmd(CMD_MFAUTHENT, BIT_PARITYERR);
-    if((ret == ERROR_NO) || (ret == ERROR_NOTAG))
+	req->length = 12;
+	req->bit_frame = 0x00;
+	req->command = CMD_MFAUTHENT;
+	req->direction = TRANSMIT;
+	req->time_out = 3000;
+	req->timer_start_now = 1;
+	picc_wait_for_req(req);
+
+    if(!req->error_code || req->error_code == -ERROR_NOTAG)
     {
-        if(RegRead(REG_STATUS2) & 0x08)
-        {
-            ret = SLOT_NO_ERROR;
-        }
+        if(pn512_reg_read(Status2Reg) & 0x08)
+			ret = 0;
         else
-        {
-            ret = SLOTERROR_ICC_MUTE;
-        }
+			ret = -PICC_ERRORCODE_MUTE;
     }
     else
-    {
-        ret = SLOTERROR_ICC_MUTE;
-    }
+        ret = -PICC_ERRORCODE_MUTE;
 
-    PrtMsg(DBGL6, "%s: exit, ret = %02X\n", __FUNCTION__, ret);
-    
-    return(ret);
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
+
+	return ret;
 }
 
 
-static UINT8 CheckBinaryRdWrtLen(UINT8 BlockNum, UINT8 TempLe)
+static int mifare_check_read_write_len(struct picc_device *picc, u8 BlockNum, u8 TempLe)
 {
-    UINT8 ret = SLOT_NO_ERROR;
+    int ret = 0;
     
-    if((picc.SAK & 0xDF) == SAK_MIFARE_4K)
+    if((picc->SAK & 0xDF) == SAK_MIFARE_4K)
     {
         if(BlockNum >= 0x80)        // sector 32 ~ sector 39, has 16 blocks in each sector
         {
@@ -146,7 +123,7 @@ static UINT8 CheckBinaryRdWrtLen(UINT8 BlockNum, UINT8 TempLe)
             }
         }
     }
-    else if(((picc.SAK & 0xDF) == SAK_MIFARE_1K) || ((picc.SAK & 0xDF) == SAK_MIFARE_MINI))
+    else if(((picc->SAK & 0xDF) == SAK_MIFARE_1K) || ((picc->SAK & 0xDF) == SAK_MIFARE_MINI))
     {
         if((TempLe > 0x30) || (TempLe & 0x0F))
         {
@@ -160,48 +137,50 @@ static UINT8 CheckBinaryRdWrtLen(UINT8 BlockNum, UINT8 TempLe)
             ret = 0x01;
         }
     }
-    
+
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
+	
     return(ret);
 }
 
 
-static UINT8 MifareAuthent(void)
+static int mifare_authen(struct picc_device *picc)
 {
-    UINT8 ret;
+    int ret = 0;
 
 
-    PrtMsg(DBGL6, "%s: start\n", __FUNCTION__);
-    
-    if(((mifare.keyValid & 0x01) && (mifare.keyNo == 0x00))
-        || ((mifare.keyValid & 0x02) && (mifare.keyNo == 0x01)))
+//	TRACE_TO("enter %s\n", __func__);
+
+    if(((picc->key_valid & 0x01) && (picc->key_No == 0x00))
+        || ((picc->key_valid & 0x02) && (picc->key_No == 0x01)))
     {
-        ret = MifareAuthentAnalyze((UINT8*)mifare.workKey);
-        if((ret == SLOT_NO_ERROR))
+        ret = mifare_authen_analyze(picc, (u8*)picc->work_key);
+        if(!ret)
         {
-            mifare.authNeed = 0x00;
+            picc->authen_need = 0x00;
         }
         else
         {
-            mifare.authNeed = 0x01;
+            picc->authen_need = 0x01;
         }
     }
     else
     {
-        ret = SLOT_NO_ERROR;
-        mifare.authNeed = 0x01;
+        ret = 0;
+        picc->authen_need = 0x01;
     }
 
-    PrtMsg(DBGL6, "%s: exit, ret = %02X\n", __FUNCTION__, ret);
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
     
     return(ret);
 }
 
 
-static UINT8 MifareBlockCheck(UINT8 srcBlock, UINT8 desBlock, BOOL multBlockMode)
+static int mifare_block_check(struct picc_device *picc, u8 srcBlock, u8 desBlock, BOOL multBlockMode)
 {
-    UINT8 i;
-    UINT8 j;
-    UINT8 ret = SLOT_NO_ERROR;
+    u8 i;
+    u8 j;
+    int ret = 0;
     
     if(multBlockMode == TRUE)
     {
@@ -221,263 +200,271 @@ static UINT8 MifareBlockCheck(UINT8 srcBlock, UINT8 desBlock, BOOL multBlockMode
             }
         }
     }
-    if(mifare.block >= 0x80)         //For Mifare 4K large block
+    if(picc->block >= 0x80)         //For Mifare 4K large block
     {
-        i=(UINT8)(srcBlock / 16);        // calculate the source sector number
-        j=(UINT8)(desBlock / 16);        // calculate the target sector number
-        if((i != (UINT8)(mifare.block / 16)) || (j != (UINT8)(mifare.block / 16)))
+        i=(u8)(srcBlock / 16);        // calculate the source sector number
+        j=(u8)(desBlock / 16);        // calculate the target sector number
+        if((i != (u8)(picc->block / 16)) || (j != (u8)(picc->block / 16)))
         {
             ret = 1;                    // skip
         }
     }
     else
     {
-        i=(UINT8)(srcBlock / 4);        // calculate the source sector number
-        j=(UINT8)(desBlock / 4);        // calculate the target sector number
-        if((i!=(UINT8)(mifare.block / 4)) || (j!=(UINT8)(mifare.block / 4)))
+        i=(u8)(srcBlock / 4);        // calculate the source sector number
+        j=(u8)(desBlock / 4);        // calculate the target sector number
+        if((i!=(u8)(picc->block / 4)) || (j!=(u8)(picc->block / 4)))
         {
             ret = 1;                   // skip
         }
     }
-    
+
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
+		
     return(ret);
 }
 
 
-static UINT8 MifareBlockRead(UINT8 addr, UINT8 *blockData)
+static int mifare_block_read(struct picc_device *picc, u8 addr, u8 *blockData)
 {
-    UINT8 j;
-    UINT8 nBytesReceived;
-    UINT8 ret;
+	struct pn512_request	*req = picc->request;
+	int ret;
 
-    FIFOFlush();            // Empty FIFO
-    RegWrite(REG_FIFODATA, PICC_MF_READ);    // read command code
-    RegWrite(REG_FIFODATA, addr);
-    SetTimer100us(40);
-    ret = PcdHandlerCmd(CMD_TRANSCEIVE, BIT_PARITYERR | BIT_CRCERR);
 
-    nBytesReceived = RegRead(REG_FIFOLEVEL);
-    //Read in the Data
-    for(j=0; j<nBytesReceived; j++) 
-    {
-        blockData[j] = RegRead(REG_FIFODATA);
-    }
-    if(ret != ERROR_NO)
-    {
-        ret = SLOTERROR_ICC_MUTE;
-    }
+//	TRACE_TO("enter %s\n", __func__);
+
+	req->buf[0] = PICC_MF_READ;
+	req->buf[1] = addr;
+
+	req->length = 2;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 100;
+	req->timer_start_auto = 1;
+	picc_wait_for_req(req);
+	
+	memcpy(blockData, req->buf, req->actual);
+
+	if(req->error_code)
+        ret = -PICC_ERRORCODE_XFR_PARITY_ERROR;
     else
     {
-        if (nBytesReceived != 16) 
-        {
-            ret = SLOTERROR_ICC_MUTE;
-        }
+        if (req->actual != 16) 
+            ret = -PICC_ERRORCODE_HW_ERROR;
         else
-        {
-            ret = SLOT_NO_ERROR;
-        }
+            ret = 0;
     }
-    
-    return(ret);
+
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret);
+
+	return ret;
+
 }
 
 
-static UINT8 MifareBlockWrite(UINT8 opcode, UINT8 addr, UINT8 *blockData)
+static int mifare_block_write(struct picc_device *picc, u8 opcode, u8 addr, u8 *blockData)
 {
-    UINT8 i;
-//    UINT8 j;
-    UINT8 nBytesReceived;
-    UINT8 ret;
-    UINT8 tempBuf[5];
+    int ret = 0;
+    u8 tempBuf[5];
+	struct pn512_request	*req = picc->request;
 
 
-    PrtMsg(DBGL6, "%s: start\n", __FUNCTION__);
+//	TRACE_TO("enter %s\n", __func__); 
 
-    FIFOFlush();            // Empty FIFO
-    RegWrite(REG_FIFODATA, opcode);        // Write command code
-    RegWrite(REG_FIFODATA, addr);
+
+	req->buf[0] = opcode;
+	req->buf[1] = addr;
+	req->length = 2;
+
     if(opcode == PICC_MF_WRITE_4_BYTES)
     {
-        FIFOWrite(blockData, 4);
+    	memcpy(req->buf+2, blockData, 4);
+		req->length = 6;
     }
-    SetTimer100us(600);
-    ret = PcdHandlerCmd(CMD_TRANSCEIVE, BIT_PARITYERR);
+	
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
+	req->time_out = 600;
+	req->timer_start_auto = 1;
+	picc_wait_for_req(req);
 
-    nBytesReceived = RegRead(REG_FIFOLEVEL);
-    i = GetBitNumbersReceived();
 
-    //Read in the Data
-    FIFORead(tempBuf, nBytesReceived);
-
-    if(ret != ERROR_NOTAG)
+	memcpy(tempBuf, req->buf, req->actual);
+	
+	ret = req->error_code;
+    if(ret != -ERROR_NOTAG)
     {
-        if(i != 4)
+        if(req->bit_numbers != 4)
         {
-            ret = SLOTERROR_ICC_MUTE;
+            ret = -PICC_ERRORCODE_MUTE;
         }
         else
         {
             if((tempBuf[0] & 0x0f) == 0x0A)
             {
-                ret = SLOT_NO_ERROR;
+                ret = 0;
                 if(opcode == PICC_MF_WRITE_4_BYTES)
                 {
-                    return(ret);
+                    goto err;
                 }
             }
             else
             {
-                ret = SLOTERROR_ICC_MUTE;
+                ret = -PICC_ERRORCODE_MUTE;
             }
         }
     }
     else
     {
-        ret = SLOTERROR_ICC_MUTE;
+        ret = -PICC_ERRORCODE_MUTE;
     }
-    if(ret == SLOT_NO_ERROR)
+	
+    if(!ret)
     {
-        FIFOWrite(blockData, 16);
-        
-        SetTimer100us(600);
-        ret = PcdHandlerCmd(CMD_TRANSCEIVE, BIT_PARITYERR);
+		memcpy(req->buf, blockData, 16);
+		req->length = 16;
 
-        nBytesReceived = RegRead(REG_FIFOLEVEL);
-        i = GetBitNumbersReceived();
+		req->bit_frame = 0x00;
+		req->command = CMD_TRANSCEIVE;
+		req->direction = TRANSCEIVE;
+		req->time_out = 600;
+		
+		picc_wait_for_req(req);
+		
 
-        // *** Read in the Data
-        FIFORead(tempBuf, nBytesReceived);
-  	
-        if (ret & 0x80) 
+		memcpy(tempBuf, req->buf, req->actual);
+		
+		if(req->error_code == -ERROR_NOTAG)
         {   
             // timeout occured
-            ret = SLOTERROR_ICC_MUTE;
+            ret = -PICC_ERRORCODE_MUTE;
         } 
         else 
         {
-            if (i != 4)           // 4 bits are necessary
+			if(req->bit_numbers != 4)
             {
-               ret = SLOTERROR_ICC_MUTE;
+               ret = -PICC_ERRORCODE_MUTE;
             }
             else  
             {
                 // 4 bit received
                 if((tempBuf[0] & 0x0f) == 0x0A)
                 {
-                    ret = SLOT_NO_ERROR;
+                    ret = 0;
                 }
                 else
                 {
-                    ret = SLOTERROR_ICC_MUTE;
+                    ret = -PICC_ERRORCODE_MUTE;
                 }
 
             }
         } 
     }
+	
+err:
 
-    PrtMsg(DBGL6, "%s: exit, ret = %02X\n", __FUNCTION__, ret);
+//	TRACE_TO("exit %s, ret = %d\n", __func__, ret); 
 
-    return(ret);
+	return(ret);
 }
 
 
-static UINT8 MifareIncDec(UINT8 opcode, UINT8 addr, UINT8 *value)
+static int mifare_inc_dec(struct picc_device *picc, u8 opcode, u8 addr, u8 *value)
 {
-    UINT8 i;
-    UINT8 j;
-    UINT8 nBytesReceived;
-    UINT8 ret;
-    UINT8 tempBuf[5];
+    int ret;
+    u8 tempBuf[5];
+	struct pn512_request	*req = picc->request;
 
 
-    FIFOFlush();                          // Empty FIFO
-    RegWrite(REG_FIFODATA, opcode);       // Write command code
-    RegWrite(REG_FIFODATA, addr);
+//    TRACE_TO("enter %s\n", __func__); 
 
+	req->buf[0] = opcode;
+	req->buf[1] = addr;
+	req->length = 2;
+	req->bit_frame = 0x00;
+	req->command = CMD_TRANSCEIVE;
+	req->direction = TRANSCEIVE;
     if(opcode == PICC_MF_TRANSFER)
-    {
-        SetTimer100us(120);
-    }
+        req->time_out = 120;
     else
-    {
-        SetTimer100us(15);
-    }
-    ret = PcdHandlerCmd(CMD_TRANSCEIVE, BIT_PARITYERR);
-    nBytesReceived = RegRead(REG_FIFOLEVEL);
+        req->time_out = 15;
 
-    i = GetBitNumbersReceived();
-    //Read in the Data
-    for (j = 0; j < nBytesReceived; j++) 
+	picc_wait_for_req(req);
+	
+	memcpy(tempBuf, req->buf, req->actual);
+
+	ret = req->error_code;
+
+    if(ret != -ERROR_NOTAG)
     {
-        tempBuf[j] = RegRead(REG_FIFODATA);
-    }  
-    if(ret != ERROR_NOTAG)
-    {
-        if(i != 4)
+		if(req->bit_numbers != 4)
         {
-            ret = SLOTERROR_ICC_MUTE;
+            ret = -PICC_ERRORCODE_MUTE;
         }
         else
         {
             if((tempBuf[0] & 0x0f) == 0x0A)
             {
-                ret = SLOT_NO_ERROR;
+                ret = 0;
             }
             else
             {
-                ret = SLOTERROR_ICC_MUTE;
+                ret = -PICC_ERRORCODE_MUTE;
             }
         }
     }
     else
     {
-        ret = SLOTERROR_HW_ERROR;
+        ret = -PICC_ERRORCODE_HW_ERROR;
     }
 
-    if((ret == SLOT_NO_ERROR) && (opcode != PICC_MF_TRANSFER))
+    if(!ret && opcode != PICC_MF_TRANSFER)
     {
-        j = 4;
-        while(j--)
-        {
-            RegWrite(REG_FIFODATA, value[j]);
-        }
-        
-        SetTimer100us(15);          // long timeout
-        ret = PcdHandlerCmd(CMD_TRANSCEIVE, BIT_PARITYERR);
+		req->buf[0] = value[3];
+		req->buf[1] = value[2];
+		req->buf[2] = value[1];
+		req->buf[3] = value[0];
+		req->length = 4;
+		req->bit_frame = 0x00;
+		req->command = CMD_TRANSCEIVE;
+		req->direction = TRANSCEIVE;
+		req->time_out = 15;
+		
+		picc_wait_for_req(req);
+		
+		memcpy(tempBuf, req->buf, req->actual);
 
-        nBytesReceived = RegRead(REG_FIFOLEVEL);
-        //i = GetBitNumbersReceived();
-        //  Read in the Data
-        for (j = 0; j < nBytesReceived; j++)
-        {
-            tempBuf[j] = RegRead(REG_FIFODATA);
-        }
-        if (ret == ERROR_NOTAG) 
+		if(req->error_code == -ERROR_NOTAG)
         {   
-           	ret = SLOT_NO_ERROR;
+           	ret = 0;
         } 
         else 
         {
-            ret = SLOTERROR_ICC_MUTE;           
+            ret = -PICC_ERRORCODE_MUTE;           
         } 
     }
     
+//	TRACE_TO("enter %s, ret = %d\n", __func__, ret);     
+
     return(ret);
 }
 
 
 
-UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *recLen)
+int mifare_pcsc_command(struct picc_device *picc, u8 *senBuf, u32 senLen, u8 *recBuf, u32 *recLen)
 {
-    UINT8 i;
-    UINT8 ret;
-    UINT8 mifareBlock;
-    UINT8 tempLe;
+    u32 i;
+    int ret = 0;
+    u8 mifareBlock;
+    u8 tempLe;
     BOOL  multBlockMode;
-    UINT8 mifareOpcode;
-    UINT8 *pResAddr;
+    u8 mifareOpcode;
+    u8 *pResAddr;
     
 
+//	TRACE_TO("enter %s, cmd_len=%d\n", __func__, senLen);
     /******* Load Authentication Keys ************/
     // accroding to pcsc part3, Requirements for PC-Connected Interface Devices
     if((senLen == 11) && (senBuf[1] == 0x82) && (senBuf[4] == 0x06))
@@ -486,13 +473,13 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
         {
             for(i = 0; i < 6; i++)
             {
-                PICC_MIFARE_KEY[senBuf[3]][i] = senBuf[5 + i];
+                picc->pcd->mifare_key[senBuf[3]][i] = senBuf[5 + i];
             }
 
             recBuf[0] = 0x90;
             recBuf[1] = 0x00;
             *recLen   = 0x02;
-            ret       = SLOT_NO_ERROR;
+            ret       = 0;
         }
         // incorrect parameters
         else
@@ -506,29 +493,29 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     // FF 86 00 00 05 ADB
     else if((senLen == 10) && (senBuf[1] == 0x86) && (senBuf[2] == 0x00) && (senBuf[3] == 0x00) && (senBuf[4] == 0x05)) 
     {
-        if(picc.states != PICC_SELECTED)
+        if(picc->states != PICC_SELECTED)
         {
-            ret = MifareSelect();
+            ret = mifare_select(picc);
         }
         if(((senBuf[8] == PICC_MF_KEY_A)||(senBuf[8] == PICC_MF_KEY_B)) && (senBuf[9] <= 0x01))
         {
-            mifare.block   = senBuf[7];
-            mifare.keyType = senBuf[8];
-            mifare.keyNo   = senBuf[9];
-            ret = MifareAuthentAnalyze(PICC_MIFARE_KEY[mifare.keyNo]);
-            if(ret == SLOT_NO_ERROR)
+            picc->block   = senBuf[7];
+            picc->key_type = senBuf[8];
+            picc->key_No   = senBuf[9];
+            ret = mifare_authen_analyze(picc, picc->pcd->mifare_key[picc->key_No]);
+            if(!ret)
             {
-                if(mifare.keyNo == 0x00) 
+                if(picc->key_No == 0x00) 
                 {
-                    mifare.keyValid |= 0x01;
+                    picc->key_valid |= 0x01;
                 }
                 else
                 {
-                    mifare.keyValid |= 0x02;
+                    picc->key_valid |= 0x02;
                 }
                 for(i = 0; i < 6; i++)
                 {
-                    mifare.workKey[i] = PICC_MIFARE_KEY[mifare.keyNo][i];
+                    picc->work_key[i] = picc->pcd->mifare_key[picc->key_No][i];
                 }
 
                 recBuf[0] = 0x90;
@@ -537,13 +524,13 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             }
             else
             {
-                if(mifare.keyNo == 0x00)
+                if(picc->key_No == 0x00)
                 {
-                    mifare.keyValid &= 0xFE;
+                    picc->key_valid &= 0xFE;
                 }
                 else
                 {
-                    mifare.keyValid &= 0xFD;
+                    picc->key_valid &= 0xFD;
                 }
             }
         }
@@ -556,29 +543,29 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     // FF 88 00 BLOCK_NO KEY_TYPE KEY_NO
     else if((senLen == 0x06) && (senBuf[1] == 0x88) && (senBuf[2] == 0x00))
     {
-        if(picc.states != PICC_SELECTED)
+        if(picc->states != PICC_SELECTED)
         {
-            ret = MifareSelect();
+            ret = mifare_select(picc);
         }
         if(((senBuf[4] == PICC_MF_KEY_A) || (senBuf[4] == PICC_MF_KEY_B)) && (senBuf[5] <= 0x01))
         {
-            mifare.block   = senBuf[3];
-            mifare.keyType = senBuf[4];
-            mifare.keyNo   = senBuf[5];
-            ret = MifareAuthentAnalyze(PICC_MIFARE_KEY[mifare.keyNo]);
-            if(ret == SLOT_NO_ERROR)
+            picc->block   = senBuf[3];
+            picc->key_type = senBuf[4];
+            picc->key_No   = senBuf[5];
+            ret = mifare_authen_analyze(picc, picc->pcd->mifare_key[picc->key_No]);
+            if(!ret)
             {
-                if(mifare.keyNo == 0x00) 
+                if(picc->key_No == 0x00) 
                 {
-                    mifare.keyValid |= 0x01;
+                    picc->key_valid |= 0x01;
                 }
                 else
                 {
-                    mifare.keyValid |= 0x02;
+                    picc->key_valid |= 0x02;
                 }
                 for(i = 0; i < 6; i++)
                 {
-                    mifare.workKey[i] = PICC_MIFARE_KEY[mifare.keyNo][i];
+                    picc->work_key[i] = picc->pcd->mifare_key[picc->key_No][i];
                 }
 
                 recBuf[0] = 0x90;
@@ -587,13 +574,13 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             }
             else
             {
-                if(mifare.keyNo == 0x00)
+                if(picc->key_No == 0x00)
                 {
-                    mifare.keyValid &= 0xFE;
+                    picc->key_valid &= 0xFE;
                 }
                 else
                 {
-                    mifare.keyValid &= 0xFD;
+                    picc->key_valid &= 0xFD;
                 }
             }
         }
@@ -604,14 +591,14 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     }
     // check Binary Read
     // FF B0 00 BLOCK_NO LE
-    else if((senLen == 0x05) && (senBuf[1] == 0xB0) && (senBuf[2] == 0x00))
+    else if((senLen == 5) && (senBuf[1] == 0xB0) && (senBuf[2] == 0x00))
     {
-        ret = CheckBinaryRdWrtLen(senBuf[3], senBuf[4]);
-        if(ret == SLOT_NO_ERROR)
+        ret = mifare_check_read_write_len(picc, senBuf[3], senBuf[4]);
+        if(!ret)
         {
-            if((mifare.authNeed == 0x01) && (picc.SAK != SAK_MIFARE_ULTRALIGHT))
+            if((picc->authen_need == 0x01) && (picc->SAK != SAK_MIFARE_ULTRALIGHT))
             {
-                MifareAuthent();
+                mifare_authen(picc);
             }
             mifareBlock = senBuf[3];
             tempLe      = senBuf[4];
@@ -628,47 +615,48 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             
             do
             {
-                if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+                if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
                 {
-                    ret     = MifareBlockCheck(mifareBlock, mifareBlock, multBlockMode);
+                    ret     = mifare_block_check(picc, mifareBlock, mifareBlock, multBlockMode);
                     tempLe -= 0x10;
                 }
                 else 
                 {
-                    ret = SLOT_NO_ERROR;
+                    ret = 0;
                 }
-                if(ret == SLOT_NO_ERROR)
+                if(!ret)
                 {
-                    ret = MifareBlockRead(mifareBlock, pResAddr);
+                    ret = mifare_block_read(picc, mifareBlock, pResAddr);
                     pResAddr += 0x10;
                 }
-                if(ret != SLOT_NO_ERROR)
+                if(ret)
                 {
                     break;
                 }
                 mifareBlock++;
-                if(picc.SAK == SAK_MIFARE_ULTRALIGHT)
+                if(picc->SAK == SAK_MIFARE_ULTRALIGHT)
                 {
                     break;
                 }
             }while(tempLe);
-            if(ret == SLOT_NO_ERROR)
+            if(!ret)
             {
                 recBuf[(*recLen)++] = 0x90;
                 recBuf[(*recLen)++] = 0x00;
             }
+//			TRACE_TO("%s: ret=%d\n", __func__, ret);
         }
     }
     // check Binary Write
     // FF D6 00 BLOCK_NO LE
     else if((senBuf[1] == 0xD6) && (senBuf[2] == 0x00))
     {
-        ret = CheckBinaryRdWrtLen(senBuf[3], senBuf[4]);
-        if(ret == SLOT_NO_ERROR)
+        ret = mifare_check_read_write_len(picc, senBuf[3], senBuf[4]);
+        if(!ret)
         {
-            if((mifare.authNeed == 0x01) && (picc.SAK != SAK_MIFARE_ULTRALIGHT))
+            if((picc->authen_need == 0x01) && (picc->SAK != SAK_MIFARE_ULTRALIGHT))
             {
-                MifareAuthent();
+                mifare_authen(picc);
             }
             mifareBlock = senBuf[3];
             tempLe      = senBuf[4];
@@ -685,21 +673,21 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             
             do
             {
-                if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+                if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
                 {
-                    ret     = MifareBlockCheck(mifareBlock, mifareBlock, multBlockMode);
+                    ret     = mifare_block_check(picc, mifareBlock, mifareBlock, multBlockMode);
                     tempLe -= 0x10;
                     mifareOpcode = PICC_MF_WRITE_16_BYTES;
                 }
                 else 
                 {
-                    ret = SLOT_NO_ERROR;
+                    ret = 0;
                     tempLe -= 0x04;
                     mifareOpcode = PICC_MF_WRITE_4_BYTES;
                 }
-                if(ret == SLOT_NO_ERROR)
+                if(!ret)
                 {
-                    ret = MifareBlockWrite(mifareOpcode, mifareBlock, pResAddr);
+                    ret = mifare_block_write(picc, mifareOpcode, mifareBlock, pResAddr);
                     if(mifareOpcode == PICC_MF_WRITE_16_BYTES)
                     {
                         pResAddr += 0x10;
@@ -709,28 +697,28 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
                         pResAddr += 0x04;
                     }
                 }
-                if(ret != SLOT_NO_ERROR)
+                if(ret)
                 {
                     break;
                 }
                 mifareBlock++;
             }while(tempLe);
             
-            if(ret == SLOT_NO_ERROR)
+            if(!ret)
             {
                 recBuf[0] = 0x90;
                 recBuf[1] = 0x00;
                 *recLen   = 0x02;
             }
-            if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+            if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
             {
                 if((mifareBlock >= 0x80) && ((mifareBlock % 16) == 0x00))
                 {
-                    pcd.piccPoll = TRUE;
+                    picc->pcd->piccPoll = TRUE;
                 }
                 else if((mifareBlock % 4) == 0x00)
                 {
-                    pcd.piccPoll = TRUE;
+                    picc->pcd->piccPoll = TRUE;
                 }
             }
         }
@@ -738,25 +726,25 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     
     // check Value Block Read
     // FF B1 00 BLOCK_NO 04
-    else if((senLen == 0x05) && (senBuf[1] == 0xB1) && (senBuf[2] == 0x00) && (senBuf[4] == 0x04))
+    else if((senLen == 5) && (senBuf[1] == 0xB1) && (senBuf[2] == 0x00) && (senBuf[4] == 0x04))
     {
-        if((mifare.authNeed == 0x01) && (picc.SAK != SAK_MIFARE_ULTRALIGHT))
+        if((picc->authen_need == 0x01) && (picc->SAK != SAK_MIFARE_ULTRALIGHT))
         {
-            MifareAuthent();
+            mifare_authen(picc);
         }
-        if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+        if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
         {
-            ret = MifareBlockCheck(senBuf[3], senBuf[3], FALSE);
+            ret = mifare_block_check(picc, senBuf[3], senBuf[3], FALSE);
         }
         else 
         {
             ret = SLOT_ERROR;
         }
-        if( ret == SLOT_NO_ERROR)
+        if( !ret)
         {
-            ret = MifareBlockRead(senBuf[3], recBuf);
+            ret = mifare_block_read(picc, senBuf[3], recBuf);
         }
-        if(ret == SLOT_NO_ERROR)
+        if(!ret)
         {
             // check the Value Block Format
             for(i = 0; i < 4; i++)
@@ -767,7 +755,7 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
                 }
             }
 
-            if(ret == SLOT_NO_ERROR)
+            if(!ret)
             {
                 for(i = 0; i < 4; i++) 
                 {
@@ -785,9 +773,9 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     // FF D7 00 BLOCK_NO 05 VB_OP VB_VALUE
     else if((senLen == 10) && (senBuf[1] == 0xD7) && (senBuf[2] == 0x00) && (senBuf[4] == 0x05) && (senBuf[5] < 0x03))
     {
-        if((mifare.authNeed == 0x01) && (picc.SAK != SAK_MIFARE_ULTRALIGHT))
+        if((picc->authen_need == 0x01) && (picc->SAK != SAK_MIFARE_ULTRALIGHT))
         {
-            MifareAuthent();
+            mifare_authen(picc);
         }
         mifareBlock = senBuf[3];
         // step 1. Store Value Operation
@@ -827,33 +815,33 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             mifareOpcode = PICC_MF_DECREMENT;
 
         }
-        if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+        if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
         {
-            ret = MifareBlockCheck(mifareBlock, mifareBlock, FALSE);
+            ret = mifare_block_check(picc, mifareBlock, mifareBlock, FALSE);
         }
         else 
         {
             ret = SLOT_ERROR;
         }
-        if( ret == SLOT_NO_ERROR)
+        if(!ret)
         {
             if(mifareOpcode == PICC_MF_WRITE_16_BYTES)
             {
-                ret = MifareBlockWrite(mifareOpcode, mifareBlock, senBuf + 5);
+                ret = mifare_block_write(picc, mifareOpcode, mifareBlock, senBuf+5);
             }
             else
             {
-                ret = MifareIncDec(mifareOpcode, mifareBlock, senBuf + 6);
+                ret = mifare_inc_dec(picc, mifareOpcode, mifareBlock, senBuf+6);
             }
         }
-        if(ret == SLOT_NO_ERROR)
+        if(!ret)
         {
             // Step 2. Transfer Operation
             if((mifareOpcode == PICC_MF_INCREMENT) || (mifareOpcode == PICC_MF_DECREMENT))
             {
-                ret = MifareIncDec(PICC_MF_TRANSFER, mifareBlock, 0x00);
+                ret = mifare_inc_dec(picc, PICC_MF_TRANSFER, mifareBlock, senBuf+6);
             }
-            if(ret == SLOT_NO_ERROR)
+            if(!ret)
             {
                 recBuf[0] = 0x90;
                 recBuf[1] = 0x00;
@@ -867,31 +855,33 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
             && (senBuf[4] == 0x02) && (senBuf[5] == 0x03))
 
     {
-        if((mifare.authNeed == 0x01) && (picc.SAK != SAK_MIFARE_ULTRALIGHT))
+        if((picc->authen_need == 0x01) && (picc->SAK != SAK_MIFARE_ULTRALIGHT))
         {
-            MifareAuthent();
+            mifare_authen(picc);
         }
         mifareBlock = senBuf[6];
         // step 1. Restore Value Operation
         // Restore Value Operation
 
-        if(picc.SAK != SAK_MIFARE_ULTRALIGHT)
+        if(picc->SAK != SAK_MIFARE_ULTRALIGHT)
         {
-            ret = MifareBlockCheck(senBuf[3], senBuf[6], FALSE);
+            ret = mifare_block_check(picc, senBuf[3], senBuf[6], FALSE);
         }
         else 
         {
             ret = SLOT_ERROR;
         }
-        if( ret == SLOT_NO_ERROR)	
+		
+        if( !ret)	
         {
-            ret = MifareIncDec(PICC_MF_RESTORE, senBuf[3], 0);
+            ret = mifare_inc_dec(picc, PICC_MF_RESTORE, senBuf[3], senBuf+6);
         }
-        if(ret == SLOT_NO_ERROR)
+		
+        if(!ret)
         {
             // Step 2. Transfer Operation
-            ret = MifareIncDec(PICC_MF_TRANSFER, mifareBlock, 0);
-            if(ret == SLOT_NO_ERROR)
+            ret = mifare_inc_dec(picc, PICC_MF_TRANSFER, mifareBlock, senBuf+6);
+            if(!ret)
             {
                 recBuf[0] = 0x90;
                 recBuf[1] = 0x00;
@@ -901,32 +891,65 @@ UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *rec
     }
     else
     {
-        ret = SLOTERROR_CMD_ABORTED;
+        ret = -PICC_ERRORCODE_CMD_ABORTED;
     }
 
-    if(ret == SLOT_NO_ERROR)
+    if(!ret)
     {
-        pcd.pollDelay = 1000;                 // 1000ms, start another poll
-        pcd.piccPoll = FALSE;
+        picc->pcd->poll_interval = 1000;                 // 1000ms, start another poll
+        picc->pcd->piccPoll = FALSE;
     }
-    else if(ret == SLOTERROR_CMD_ABORTED)
+    else if(ret == -PICC_ERRORCODE_CMD_ABORTED)
     {
         recBuf[0] = 0x6A;
         recBuf[1] = 0x81;
         *recLen = 0x02;
-        ret = SLOT_NO_ERROR;
-        pcd.piccPoll = TRUE;
+        ret = 0;
+        picc->pcd->piccPoll = TRUE;
     }
     else
     {
         recBuf[0] = 0x63;
         recBuf[1] = 0x00;
         *recLen = 0x02;
-        ret = SLOT_NO_ERROR;	
-        pcd.piccPoll = TRUE;
+        ret = 0;	
+        picc->pcd->piccPoll = TRUE;
     }
 
+//	TRACE_TO("exit %s\n", __func__);
+
     return(ret);
+}
+
+void mifare_type_coding(struct picc_device *picc)
+{
+	picc->type = PICC_MIFARE;
+	switch(picc->SAK)
+	{
+		case 0x00:
+			picc->name = "mifare ultralight (C) CL2";
+			break;
+
+		case 0x09:
+			picc->name = "mifare mini(0.3k)";
+			break;
+
+		case 0x08:
+			picc->name = "mifare classic 1K";
+			break;
+
+		case 0x18:
+			picc->name = "mifare classic 4K";
+			break;
+
+		case 0x20:
+			picc->name = "mifare desfire";
+			break;
+
+		default:
+			picc->name = "unkonw tag";
+			break;
+	}
 }
 
 

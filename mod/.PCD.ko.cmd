@@ -1,0 +1,1 @@
+cmd_/opt/acr910/pcd/mod/PCD.ko := /opt/acr910/arm-eabi-4.4.3/bin/arm-linux-ld -r  -T /opt/acr910/kernel/scripts/module-common.lds --build-id  -o /opt/acr910/pcd/mod/PCD.ko /opt/acr910/pcd/mod/PCD.o /opt/acr910/pcd/mod/PCD.mod.o

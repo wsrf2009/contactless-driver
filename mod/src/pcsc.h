@@ -51,16 +51,16 @@
 
 
 // Data object Errors
-#define ERROR_NO_GENERAL           0x00
-#define ERROR_WARNING              0xFF
-#define ERROR_NOINF                0xFE
-#define ERROR_EXSTOP               0xFD
-#define ERROR_OBJECT_NOTSUPPORTED  0xFC
-#define ERROR_OBJECT_LENGTH        0xFB
-#define ERROR_OBJECT_VALUE         0xFA
-#define ERROR_NOIFDRES             0xF9
-#define ERROR_NOICCRES             0xF8
-#define ERROR_NOPRESIEDIAGNOSIS    0xF7
+//#define ERROR_NO_GENERAL           0
+#define ERROR_WARNING              1
+#define ERROR_NOINF                2
+#define ERROR_EXSTOP               3
+#define ERROR_OBJECT_NOTSUPPORTED  4
+#define ERROR_OBJECT_LENGTH        5
+#define ERROR_OBJECT_VALUE         6
+#define ERROR_NOIFDRES             7
+#define ERROR_NOICCRES             8
+#define ERROR_NOPRESIEDIAGNOSIS    9
 
 /****** switch protocol data object *******/
 // the standard type
@@ -83,30 +83,8 @@
 
 
 
-struct pcscInfo
-{
-    // bit 0: TxCRC bit
-    // bit 1: RxCRC bit
-    // bit 2: TxParity bit
-    // bit 3: RxParity bit
-    // bit 4: prologue bit
-    // bit 5: vendor specify bit
-    volatile UINT8 fgTxRx;
-    volatile UINT8 preCmd;
-    volatile UINT8 trsStatus;
-    volatile UINT8 fgStatus;
-    volatile UINT8 lastRxValBits;
-    volatile UINT8 lastTxValBits;
-    volatile UINT8 nextCmd;
-};
-
-extern struct pcscInfo pcsc;
-
-
-UINT8 PcscIfdCmdDispatch(UINT8 cmdtype, UINT8 *cmdBuf, UINT8 cmdlen, UINT8 *resBuf, UINT16 *resLen);
-void PcscAtrBuild(UINT8 *atrBuf, UINT16 *atrLen);
-
-
+void pcsc_building_atr(struct picc_device *picc, u8 *atrBuf, u32 *atrLen);
+int pcsc_cmd_dispatch(struct picc_device *picc, u8 cmdtype, u8 *cmdBuf, u32 cmdlen, u8 *resBuf, u32 *resLen);
 
 
 #endif

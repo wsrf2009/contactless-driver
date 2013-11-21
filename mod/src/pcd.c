@@ -1,15 +1,9 @@
-/*
-* Name: PCD source file
-* Date: 2012/12/04
-* Author: Alex Wang
-* Version: 1.0
-*/
+
 
 
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/miscdevice.h>
-#include <linux/semaphore.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/uaccess.h>
@@ -20,154 +14,160 @@
 #include <linux/init.h>
 #include <linux/workqueue.h>
 #include <linux/poll.h>
-//#include <linux/sched.h>   //wake_up_process()
-//#include <linux/kthread.h> //kthread_create(),kthread_run()
+#include <linux/sched.h>   //wake_up_process()
 
 
 #include "common.h"
 #include "picc.h"
 #include "debug.h"
-#include "pn512.h"
-#include "delay.h"
 
-struct pcd_dev
+
+struct pcd_param
 {
-    struct cdev cdev;
+    u8 *p_iBuf;
+    u8 *p_oBuf;
+    u32  iDataLen;
+    u32  oDataLen;
+    u32 statusCode;
 };
-
-typedef struct
-{
-    UINT8 *p_iBuf;
-    UINT8 *p_oBuf;
-    UINT32  iDataLen;
-    UINT32  oDataLen;
-}PCD_PARAM;
 
 
 #define  Card_PowerOn     0x01
 #define  Card_PowerOff    0x02
 #define  Card_XfrAPDU     0x03
 
-//extern volatile bool pollReady;
-
-static struct semaphore pcd_mutex;
-static UINT8 sem_inc = 0;
-struct workqueue_struct *pcdPoll = NULL;
-
-void RunPiccPoll(struct work_struct *work);
-DECLARE_DELAYED_WORK(cardPoll, RunPiccPoll);
 
 
+void run_picc_poll(struct work_struct *work);
+DECLARE_DELAYED_WORK(card_Poll, run_picc_poll);
 
 
-static INT64 PCD_ioctl(struct file *filp, UINT32 cmd, UINT64 arg) 
+struct pcd_common
 {
+	struct pcd_device		pcd;
+	struct picc_device		picc;
 
-//    UINT8 CardIdx = cmd & 0x0F;
-    UINT8 IFDCMD = (cmd >> 4) & 0x0F;
-    PCD_PARAM KerParam;
-    PCD_PARAM *UsrParam = (PCD_PARAM *)arg;
-    UINT8 *p_iData;
-    UINT8 *p_oData;
-    INT64  ret = 0;
-    UINT8 level = 0;
+	struct semaphore	mutex;
+	u8	sem_inc;
+	struct workqueue_struct 	*polling;
+
+	int 		(*slot_changed_notify)(void *, u8);
+	void		*private_data;
+
+};
+
+struct pcd_common		*common = NULL;
+
+
+
+#include "picc.c"
+#include "ccid_picc.c"
+
+
+static long pcd_ioctl(struct file *filp, u32 cmd, unsigned long arg) 
+{
+	struct pcd_common *common = filp->private_data;
+    u8 pcd_cmd = (cmd >> 4) & 0xFF;
+    struct pcd_param KerParam;
+    struct pcd_param *UsrParam = (struct pcd_param *)arg;
+    u8 *p_iData;
+    u8 *p_oData;
+    u32  ret = 0;
+    u8 level = 0;
     
 
-
-    PrtMsg(DBGL4, "welcome to the function: %s, IFDCMD = %X\n", __FUNCTION__, IFDCMD);
-
-//    CLEAR_BIT(pcd.fgPoll, BIT_POLLCARD);
-
-    if(down_interruptible(&pcd_mutex))    // acquire the semaphore
+    if(down_interruptible(&common->mutex))    // acquire the semaphore
     {
-        ret = (-ERESTARTSYS);
+        ret = -ERESTARTSYS;
         goto err;
     }
-    PrtMsg(DBGL4, "11111111111111111111111\n");
+
     if((!UsrParam) || (copy_from_user(&KerParam, UsrParam, sizeof(KerParam))))
     {
-        ret = (-EFAULT);          // bad address
+        ret = -EFAULT;          // bad address
         goto err;
     }
 
-    switch(IFDCMD)
-    {
+    switch(pcd_cmd)
+    {		
         case Card_PowerOn:
         {
-            if(!KerParam.p_oBuf)
-            {
-                ret = (-EFAULT);       // bad address
+            if(!KerParam.p_oBuf) 
+			{
+                ret = -EFAULT;       // bad address
                 goto err;
             }
+			
             p_oData = kmalloc(KerParam.oDataLen, GFP_KERNEL);
-            if(!p_oData)
-            {
-                ret = (-EFAULT);       // bad address
+			
+            if(!p_oData) 
+			{
+                ret = -EFAULT;       // bad address
                 goto err;                
             }
-            if(PiccPowerON(p_oData, (UINT16*)&KerParam.oDataLen))
-            {
-                ret = (-ENXIO);        // device error
-                goto err;
+
+			if((ret = picc_power_on(&common->picc, p_oData, &KerParam.oDataLen)) != 0)	
+				goto err2;
+
+			if(copy_to_user(KerParam.p_oBuf, p_oData, KerParam.oDataLen)) 
+			{
+                ret = -EFAULT;       // bad address
+                goto err2;
             }
-            if(copy_to_user(KerParam.p_oBuf, p_oData, KerParam.oDataLen))
-            {
-                ret = (-EFAULT);       // bad address
-                goto err;
+
+			if(copy_to_user(&UsrParam->oDataLen, &KerParam.oDataLen, sizeof(KerParam.oDataLen)))
+			{
+                ret = -EFAULT;       // bad address
+                goto err2;
             }
-            if(copy_to_user(&UsrParam->oDataLen, &KerParam.oDataLen, sizeof(KerParam.oDataLen)))
-            {
-                ret = (-EFAULT);       // bad address
-                goto err;
-            }
+			
+			kfree(p_oData);
+			
             break; 
         }
 
         case Card_PowerOff:
         {
-            PiccPowerOff();
-
+            picc_power_off(&common->picc);
+			ret = 0; 
             break;
         }
 
         case Card_XfrAPDU:
         {
-            if((KerParam.iDataLen <= 0) || (KerParam.oDataLen <= 0) || (!KerParam.p_iBuf) || (!KerParam.p_oBuf))
-            {
-                ret = (-EFAULT);       // bad address
+            if((KerParam.iDataLen <= 0) || (KerParam.oDataLen <= 0) || (!KerParam.p_iBuf) || (!KerParam.p_oBuf)) 
+			{
+                ret = -EFAULT;       // bad address
                 goto err;
             }
+			
             p_iData = kmalloc(KerParam.iDataLen, GFP_KERNEL);
             p_oData = kmalloc(KerParam.oDataLen, GFP_KERNEL);
+			
             if((!p_iData) || (!p_oData) || (copy_from_user(p_iData, KerParam.p_iBuf, KerParam.iDataLen)))
             {
-                ret = (-EFAULT);       // bad address
-                goto err;
+                ret = -EFAULT;       // bad address
+                goto err1;
             }
-            if(PiccXfrDataExchange(p_iData, KerParam.iDataLen, p_oData, (UINT16*)&KerParam.oDataLen, &level))
-            {
-                ret = (-ENXIO);        // device error
-                goto err;
-            }
+			
+            if((ret = picc_command_exchange(&common->picc, p_iData, KerParam.iDataLen, p_oData, &KerParam.oDataLen, &level)) != 0)	
+				goto err;
+
             if((KerParam.oDataLen <= 0) || (copy_to_user(KerParam.p_oBuf, p_oData, (unsigned long)KerParam.oDataLen)))
             {
-                ret = (-EFAULT);       // bad address
-                goto err;
+                ret = -EFAULT;       // bad address
+                goto err1;
             }
+			
             if(copy_to_user(&UsrParam->oDataLen, &KerParam.oDataLen, sizeof(KerParam.oDataLen)))
             {
-                ret = (-EFAULT);       // bad address
-                goto err;
+                ret = -EFAULT;       // bad address
+                goto err1;
             }
 
-            if(p_iData)
-            {
-                kfree(p_iData);
-            }
-            if(p_oData)
-            {
-                kfree(p_oData);
-            }
+			kfree(p_iData);
+			kfree(p_oData);
+			
             break;
         }
 
@@ -175,69 +175,80 @@ static INT64 PCD_ioctl(struct file *filp, UINT32 cmd, UINT64 arg)
             break;
     }
 
+	up(&common->mutex); 
+	return(0);
+
+
+err1:
+	if(p_iData)		kfree(p_iData);
+err2:
+	if(p_oData)		kfree(p_oData);
 err:
-    PrtMsg(DBGL4, "2222222222222222\n");
-    up(&pcd_mutex);                    // release the semaphore
-//    SET_BIT(pcd.fgPoll, BIT_POLLCARD);
-
-    PrtMsg(DBGL4, "%s: exit\n", __FUNCTION__);
-
+    up(&common->mutex);                    // release the semaphore
+    UsrParam->statusCode = ret;
     return(ret);
-
 }
 
 
-static INT32 PCD_Open(struct inode *inode, struct file *filp)
+static int pcd_open(struct inode *inode, struct file *filp)
 {
-    struct pcd_dev *dev;
+    if(common->sem_inc > 0)    return(-ERESTARTSYS);
+    common->sem_inc++;
 
-    
-
-    PrtMsg(DBGL1, "Welcome to entry to the function: %s\n", __FUNCTION__);
-    if(sem_inc > 0)    return(-ERESTARTSYS);
-    sem_inc++;
-
-    dev = container_of(inode->i_cdev, struct pcd_dev, cdev);
-    filp->private_data = dev;
+    filp->private_data = common;
 
     return(0);
 }
-static INT32 PCD_release(struct inode *inode, struct file *filp)
+static int pcd_release(struct inode *inode, struct file *filp)
 {
-    sem_inc--;
+	struct pcd_common *common = filp->private_data;
+
+	
+	common->sem_inc--;
+	
     return(0);
 }
 
+extern int picc_interrput_in(u8 slot_status);
 
-void RunPiccPoll(struct work_struct *work)
+void run_picc_poll(struct work_struct *work)
 {
-    PrtMsg(DBGL3, "%s: start\n", __FUNCTION__);
 
-    queue_delayed_work(pcdPoll, &cardPoll, (pcd.pollDelay * HZ) / 1000);
 
-    if(down_trylock(&pcd_mutex))    
+    if(down_trylock(&common->mutex))    
     {
-        PrtMsg(DBGL3, "%s: can't got the semaphore 'pcd_mutex'\n", __FUNCTION__);
-        return;
+        goto done;
     }
 
-    if(BITISSET(pcd.fgPoll, BIT_AUTOPOLL) && BITISSET(pcd.fgPoll, BIT_POLLCARD))
-    {
-        PiccPoll();
+    if(BITISSET(common->pcd.flags_polling, AUTO_POLLING) && BITISSET(common->pcd.flags_polling, POLLING_CARD_ENABLE))
+    {	
+        picc_polling_tags(&common->picc);
+
+		if(BITISSET(common->picc.status, SLOT_CHANGE))
+		{
+			if(!picc_interrput_in(common->picc.status & PRESENT))
+				CLEAR_BIT(common->picc.status, SLOT_CHANGE);
+		}
     }
 
-    up(&pcd_mutex);
 
-    PrtMsg(DBGL3, "%s: exit\n", __FUNCTION__);
+
+    up(&common->mutex);
+
+done:
+	
+	queue_delayed_work(common->polling, &card_Poll, (common->pcd.poll_interval * HZ) / 1000);
+
+
 }
 
 
 static struct file_operations pcd_fops=
 {
     .owner = THIS_MODULE,
-    .open = PCD_Open,
-    .unlocked_ioctl = PCD_ioctl,
-    .release = PCD_release
+    .open = pcd_open,
+    .unlocked_ioctl = pcd_ioctl,
+    .release = pcd_release
 };
 
 static struct miscdevice pcd_misc=
@@ -247,86 +258,91 @@ static struct miscdevice pcd_misc=
     .fops = &pcd_fops
 };
 
-static INT32 PCDInit(void)
+static int pcd_init(void)
 {
-    Pn512Init();
-    PiccInit();
-  
-    return(0);
-}
+	int ret;
 
-static INT32 PCDUninit(void)
-{
-    Pn512Uninit();
+	
+    TRACE_TO("enter %s\n", __func__);
+	
+	common = kzalloc(sizeof *common, GFP_KERNEL);
+	if (!common)
+	{
+		ret = -ENOMEM;
+		goto err1;
+	}
 
-    return(0);
-}
+    sema_init(&common->mutex, 0);    // initial a semaphore, and lock it
 
-static INT32 PCD_Init(void)
-{
-    PrtMsg(DBGL1, "%s: start to install PCD driver!\n", __FUNCTION__);
-    sema_init(&pcd_mutex, 0);    // initial a semaphore, and lock it
-    if(PCDInit())
+	ret = picc_init(common);
+	if(ret)
+		goto err2;
+
+	ret = misc_register(&pcd_misc);
+    if(ret)
     {
-        up(&pcd_mutex);
-        PrtMsg(DBGL1, "%s: Fail to initial PCD device\n",__FUNCTION__);
-        return (-1);
-    }
-    
-    if(misc_register(&pcd_misc))
-    {
-        PrtMsg(DBGL1, "%s: Fail to register device\n",__FUNCTION__);
-        goto err1;
+        ERROR_TO("fail to register device\n");
+        goto err3;
     }
 
-
-
-    pcdPoll = create_singlethread_workqueue("Polling PICC");
-    if(pcdPoll == NULL)
+    common->polling = create_singlethread_workqueue("polling picc");
+    if(!common->polling)
     {
-        PrtMsg(DBGL1, "%s: Can't create work queue 'pcdPoll'", __FUNCTION__);
-        goto err2;
+        ERROR_TO("can't create work queue 'pcdPoll'\n");
+		ret = -EFAULT;
+        goto err4;
     }
-    RunPiccPoll(0);
+    run_picc_poll(0);
 
-    up(&pcd_mutex);                  // release the semaphore
-    PrtMsg(DBGL1, "%s: Success to install PCD device\n",__FUNCTION__);
+    up(&common->mutex);    
+
+    TRACE_TO("exit %s\n", __func__);
+	
     return (0);
 
-err2:
+err4:
     misc_deregister(&pcd_misc);
-err1:
-    PCDUninit();
-    up(&pcd_mutex);
-    return(-1);
+err3:
+	picc_uninit();
+err2:	
+    up(&common->mutex);
+	kfree(common);
+err1:	
+	
+	TRACE_TO("exit %s\n", __func__);
+    return ret;
 }
 
-static void PCD_Exit(void)
+static void pcd_exit(void)
 {
-    PrtMsg(DBGL1, "%s: start to uninstall PCD driver", __FUNCTION__);
-
-    if (down_interruptible(&pcd_mutex)) 
+	TRACE_TO("enter %s\n", __func__);
+	
+    if (down_interruptible(&common->mutex)) 
     {
         return;
     }
    
-    if(!cancel_delayed_work(&cardPoll)) 
+    if(!cancel_delayed_work(&card_Poll)) 
     {
-        flush_workqueue(pcdPoll);
+        flush_workqueue(common->polling);
     }
-    destroy_workqueue(pcdPoll);
+    destroy_workqueue(common->polling);
 
-    PCDUninit();
+    picc_uninit();
+	
     misc_deregister(&pcd_misc);
-    up(&pcd_mutex);
-    
-    PrtMsg(DBGL1, "%s: Success to uninstall PCD driver", __FUNCTION__);
+	
+    up(&common->mutex);
 
+	kfree(common);
+    
+	TRACE_TO("exit %s\n", __func__);
+	
     return;
 }
 
-module_init(PCD_Init);
-module_exit(PCD_Exit);
+module_init(pcd_init);
+module_exit(pcd_exit);
 MODULE_DESCRIPTION("Contactless Card Driver");
 MODULE_AUTHOR("Alex Wang");
 MODULE_LICENSE("GPL");

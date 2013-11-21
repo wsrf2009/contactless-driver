@@ -1,0 +1,640 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ACTDEPI_106	src/felica.h	22;"	d
+ACTDEPI_212	src/felica.h	24;"	d
+ACTDEPI_424	src/felica.h	26;"	d
+ACTDEPT_106	src/felica.h	23;"	d
+ACTDEPT_212	src/felica.h	25;"	d
+ACTDEPT_424	src/felica.h	27;"	d
+APDURECLENTHREHOLD	src/part4.h	37;"	d
+AR	Makefile	/^AR=$(CROSS_COMPILE)ar$/;"	m
+ARCH	Makefile	/^export ARCH=arm$/;"	m
+ARFAmpCfg106	src/pn512app.h	57;"	d
+ARFAmpCfg212	src/pn512app.h	58;"	d
+ARFAmpCfg424	src/pn512app.h	59;"	d
+ARFAmpCfg848	src/pn512app.h	60;"	d
+ATQA	src/picc.h	/^    UINT8 ATQA[2];$/;"	m	struct:piccInfo
+ATQB	src/picc.h	/^    UINT8 ATQB[13];$/;"	m	struct:piccInfo
+ATQBAnalysis	src/typeB.c	/^static void ATQBAnalysis(UINT8 *ATQB)$/;"	f	file:
+ATQBLen	src/picc.h	/^    UINT8 ATQBLen;$/;"	m	struct:piccInfo
+ATS	src/picc.h	/^    UINT8 ATS[20];     \/\/ an array used to stores the ATS send from PICC$/;"	m	struct:piccInfo
+AntennaPower	src/pn512app.c	/^void AntennaPower(BOOL on)$/;"	f
+BITISCLEAR	src/common.h	37;"	d
+BITISSET	src/common.h	36;"	d
+BIT_ACTIVATED	src/picc.h	30;"	d
+BIT_AUTOPOLL	src/picc.h	26;"	d
+BIT_AUTORATS	src/picc.h	25;"	d
+BIT_BUFFEROVFL	src/pn512.h	45;"	d
+BIT_CIDPRESENT	src/part4.h	29;"	d
+BIT_COLLERR	src/pn512.h	46;"	d
+BIT_CONNECTED	src/picc.h	31;"	d
+BIT_CRCERR	src/pn512.h	47;"	d
+BIT_DETECTSYNC	src/pn512.h	74;"	d
+BIT_ERRIRQ	src/pn512.h	36;"	d
+BIT_FEL212POLL	src/picc.h	21;"	d
+BIT_FEL424POLL	src/picc.h	22;"	d
+BIT_FIRSTINSERT	src/picc.h	32;"	d
+BIT_HIALERTIRQ	src/pn512.h	34;"	d
+BIT_IDLEIRQ	src/pn512.h	33;"	d
+BIT_INIRFON	src/pn512.h	86;"	d
+BIT_INITIATOR	src/pn512.h	64;"	d
+BIT_LOALERTIRQ	src/pn512.h	35;"	d
+BIT_MFCRYPTO1ON	src/pn512.h	54;"	d
+BIT_MSBFIRST	src/pn512.h	73;"	d
+BIT_NADPRESENT	src/part4.h	35;"	d
+BIT_PARITYDISABLE	src/pn512.h	97;"	d
+BIT_PARITYERR	src/pn512.h	48;"	d
+BIT_PCDBLOCKNUMBER	src/part4.h	28;"	d
+BIT_PCDCHAINING	src/part4.h	30;"	d
+BIT_PICCCHAINING	src/part4.h	31;"	d
+BIT_PRESENT	src/picc.h	29;"	d
+BIT_PROLOGUE	src/picc.h	39;"	d
+BIT_PROTOCOLERR	src/pn512.h	49;"	d
+BIT_RFERR	src/pn512.h	44;"	d
+BIT_RXCRC	src/picc.h	36;"	d
+BIT_RXCRCEN	src/pn512.h	80;"	d
+BIT_RXIRQ	src/pn512.h	32;"	d
+BIT_RXMULTIPLE	src/pn512.h	81;"	d
+BIT_RXPARITY	src/picc.h	38;"	d
+BIT_SET1	src/pn512.h	30;"	d
+BIT_SLOTCHANGE	src/picc.h	33;"	d
+BIT_STARTSEND	src/pn512.h	67;"	d
+BIT_TAUTO	src/pn512.h	114;"	d
+BIT_TAUTORESTART	src/pn512.h	115;"	d
+BIT_TEMPERR	src/pn512.h	43;"	d
+BIT_TIMERIRQ	src/pn512.h	37;"	d
+BIT_TOPAZPOLL	src/picc.h	23;"	d
+BIT_TSTARTNOW	src/pn512.h	62;"	d
+BIT_TSTOPNOW	src/pn512.h	61;"	d
+BIT_TXCRC	src/picc.h	35;"	d
+BIT_TXCRCEN	src/pn512.h	77;"	d
+BIT_TXIRQ	src/pn512.h	31;"	d
+BIT_TXPARITY	src/picc.h	37;"	d
+BIT_TYPEAPOLL	src/picc.h	19;"	d
+BIT_TYPEBATTRIB	src/part4.h	33;"	d
+BIT_TYPEBPOLL	src/picc.h	20;"	d
+BIT_VENDORSPEC	src/picc.h	40;"	d
+BIT_WRERR	src/pn512.h	42;"	d
+BIT_WRNFCIDTOFIFO	src/pn512.h	63;"	d
+BIT_WTXREQBEFORE	src/part4.h	34;"	d
+BIT_WTXREQUEST	src/part4.h	32;"	d
+BModeIndex	src/pn512app.h	48;"	d
+BOOL	src/common.h	/^typedef UINT8    BOOL;$/;"	t
+BRFAmpCfg106	src/pn512app.h	61;"	d
+BRFAmpCfg212	src/pn512app.h	62;"	d
+BRFAmpCfg424	src/pn512app.h	63;"	d
+BRFAmpCfg848	src/pn512app.h	64;"	d
+BsiCmdDispatch	src/picc.c	/^static UINT8 BsiCmdDispatch(UINT8 *pcmd, UINT16 cmdLen, UINT8 *pres, UINT16 *presLen)$/;"	f	file:
+CC	Makefile	/^CC=$(CROSS_COMPILE)gcc$/;"	m
+CID	src/picc.h	/^    UINT8 CID;$/;"	m	struct:pcdInfo
+CID	src/picc.h	/^    UINT8 CID;$/;"	m	struct:piccInfo
+CIDInfo	src/part4.c	/^}CIDInfo;$/;"	t	typeref:struct:__anon3	file:
+CIDInit	src/part4.c	/^void CIDInit(void)$/;"	f
+CIDNO	src/part4.c	/^CIDInfo CIDNO[15];$/;"	v
+CLEAR_BIT	src/common.h	34;"	d
+CMD_AUTH1	src/felica.h	40;"	d
+CMD_AUTH2	src/felica.h	42;"	d
+CMD_AUTOCOLL	src/pn512.h	148;"	d
+CMD_CALCCRC	src/pn512.h	142;"	d
+CMD_CONFIG	src/pn512.h	140;"	d
+CMD_DO_ENDTRANS	src/pcsc.h	30;"	d
+CMD_DO_PARAMETERS	src/pcsc.h	34;"	d
+CMD_DO_RECEIVE	src/pcsc.h	40;"	d
+CMD_DO_REC_BIT_FRAM	src/pcsc.h	38;"	d
+CMD_DO_STARTTRANS	src/pcsc.h	29;"	d
+CMD_DO_SWITCH_PROTOCOL	src/pcsc.h	43;"	d
+CMD_DO_TIMER	src/pcsc.h	33;"	d
+CMD_DO_TRANSCEIVE_DATA	src/pcsc.h	41;"	d
+CMD_DO_TRANSCEIVE_FLAG	src/pcsc.h	36;"	d
+CMD_DO_TRANSMIT	src/pcsc.h	39;"	d
+CMD_DO_TRANS_BIT_FRAM	src/pcsc.h	37;"	d
+CMD_DO_TURNOFF_RF	src/pcsc.h	31;"	d
+CMD_DO_TURNON_RF	src/pcsc.h	32;"	d
+CMD_DO_VERSIONDATA	src/pcsc.h	28;"	d
+CMD_GENERATE_RANDOMID	src/pn512.h	141;"	d
+CMD_IDLE	src/pn512.h	139;"	d
+CMD_MFAUTHENT	src/pn512.h	149;"	d
+CMD_NOCMDCHANGE	src/pn512.h	144;"	d
+CMD_READFROMSECURE	src/felica.h	44;"	d
+CMD_READ_NONEAUTH	src/felica.h	36;"	d
+CMD_RECEIVE	src/pn512.h	145;"	d
+CMD_REQC	src/felica.h	30;"	d
+CMD_REQRESPONSE	src/felica.h	34;"	d
+CMD_REQSERVICE	src/felica.h	32;"	d
+CMD_SOFTRESET	src/pn512.h	150;"	d
+CMD_TRANSCEIVE	src/pn512.h	146;"	d
+CMD_TRANSCEIVE_TO	src/pn512.h	147;"	d
+CMD_TRANSMIT	src/pn512.h	143;"	d
+CMD_WRITETOSECURE	src/felica.h	46;"	d
+CMD_WRITE_NONEAUTH	src/felica.h	38;"	d
+CODE_TIMESLOTNUMBER_1	src/felica.h	49;"	d
+CODE_TIMESLOTNUMBER_16	src/felica.h	53;"	d
+CODE_TIMESLOTNUMBER_2	src/felica.h	50;"	d
+CODE_TIMESLOTNUMBER_4	src/felica.h	51;"	d
+CODE_TIMESLOTNUMBER_8	src/felica.h	52;"	d
+COMMON_H	src/common.h	10;"	d
+CONFIGNOTHING	src/pn512app.h	19;"	d
+CONFIGTYPEA	src/pn512app.h	20;"	d
+CONFIGTYPEB	src/pn512app.h	21;"	d
+CRCReg_Update	src/crc.c	/^void CRCReg_Update(UINT8 ch, UINT16 *IpwCrc)$/;"	f
+CRC_A	src/topaz.h	26;"	d
+CRC_B	src/topaz.h	27;"	d
+CRC_H	src/crc.h	8;"	d
+CROSS_COMPILE	Makefile	/^CROSS_COMPILE=\/opt\/acr910\/arm-eabi-4.4.3\/bin\/arm-linux-$/;"	m
+Card_PowerOff	src/pcd.c	45;"	d	file:
+Card_PowerOn	src/pcd.c	44;"	d	file:
+Card_XfrAPDU	src/pcd.c	46;"	d	file:
+CfgTbl_A106Rx	src/pn512app.c	/^UINT8 CfgTbl_A106Rx[] =$/;"	v
+CfgTbl_A106Tx	src/pn512app.c	/^UINT8 CfgTbl_A106Tx[] =$/;"	v
+CfgTbl_A212Rx	src/pn512app.c	/^UINT8 CfgTbl_A212Rx[] =$/;"	v
+CfgTbl_A212Tx	src/pn512app.c	/^UINT8 CfgTbl_A212Tx[] =$/;"	v
+CfgTbl_A424Rx	src/pn512app.c	/^UINT8 CfgTbl_A424Rx[] =$/;"	v
+CfgTbl_A424Tx	src/pn512app.c	/^UINT8 CfgTbl_A424Tx[] = $/;"	v
+CfgTbl_A848Rx	src/pn512app.c	/^UINT8 CfgTbl_A848Rx[] = $/;"	v
+CfgTbl_A848Tx	src/pn512app.c	/^UINT8 CfgTbl_A848Tx[] =$/;"	v
+CfgTbl_AGen	src/pn512app.c	/^UINT8 CfgTbl_AGen[] =$/;"	v
+CfgTbl_Act106i	src/felica.c	/^UINT8 CfgTbl_Act106i[] =$/;"	v
+CfgTbl_Act212i	src/felica.c	/^UINT8 CfgTbl_Act212i[] =$/;"	v
+CfgTbl_Act424i	src/felica.c	/^UINT8 CfgTbl_Act424i[] =$/;"	v
+CfgTbl_B106Rx	src/pn512app.c	/^UINT8 CfgTbl_B106Rx[] = $/;"	v
+CfgTbl_B106Tx	src/pn512app.c	/^UINT8 CfgTbl_B106Tx[] =$/;"	v
+CfgTbl_B212Rx	src/pn512app.c	/^UINT8 CfgTbl_B212Rx[] = $/;"	v
+CfgTbl_B212Tx	src/pn512app.c	/^UINT8 CfgTbl_B212Tx[] =$/;"	v
+CfgTbl_B424Rx	src/pn512app.c	/^UINT8 CfgTbl_B424Rx[] = $/;"	v
+CfgTbl_B424Tx	src/pn512app.c	/^UINT8 CfgTbl_B424Tx[] =$/;"	v
+CfgTbl_B848Rx	src/pn512app.c	/^UINT8 CfgTbl_B848Rx[] = $/;"	v
+CfgTbl_B848Tx	src/pn512app.c	/^UINT8 CfgTbl_B848Tx[] =$/;"	v
+CfgTbl_BGen	src/pn512app.c	/^UINT8 CfgTbl_BGen[] =$/;"	v
+CfgTbl_Pas106i	src/felica.c	/^UINT8 CfgTbl_Pas106i[] =$/;"	v
+CfgTbl_Pas212i	src/felica.c	/^UINT8 CfgTbl_Pas212i[] =$/;"	v
+CfgTbl_Pas424i	src/felica.c	/^UINT8 CfgTbl_Pas424i[] =$/;"	v
+CheckBinaryRdWrtLen	src/mifare.c	/^static UINT8 CheckBinaryRdWrtLen(UINT8 BlockNum, UINT8 TempLe)$/;"	f	file:
+ClearRegBit	src/pn512app.c	/^void ClearRegBit(UINT8 reg, UINT8 bit)$/;"	f
+ComputeCrc	src/crc.c	/^void ComputeCrc(UINT8 CRCType, UINT8 *Data, unsigned int Length, UINT8 *TransmitFirst, UINT8 *TransmitSecond)$/;"	f
+DEBFLAGS	Makefile	/^DEBFLAGS=-02$/;"	m
+DEBUG_H	src/debug.h	9;"	d
+DELAY_H	src/delay.h	15;"	d
+Debug	src/debug.h	13;"	d
+Delay1ms	src/delay.c	/^void Delay1ms(UINT32 delay)$/;"	f
+Delay1s	src/delay.c	/^void Delay1s(UINT8 delay)$/;"	f
+Delay1us	src/delay.c	/^void Delay1us(UINT32 delay)$/;"	f
+Delay256P2us	src/delay.c	/^void Delay256P2us(UINT8 delay)$/;"	f
+Delay256P3us	src/delay.c	/^void Delay256P3us(UINT8 delay)$/;"	f
+Delay256us	src/delay.c	/^void Delay256us(UINT8 delay)$/;"	f
+DeselectRequest	src/part4.c	/^UINT8 DeselectRequest(void)$/;"	f
+ERROR_ATSLEN	src/pn512app.h	39;"	d
+ERROR_BITCOUNT	src/pn512app.h	37;"	d
+ERROR_BUFOVFL	src/pn512app.h	32;"	d
+ERROR_BYTECOUNT	src/pn512app.h	36;"	d
+ERROR_CID	src/pn512app.h	44;"	d
+ERROR_COLL	src/pn512app.h	34;"	d
+ERROR_CRC	src/pn512app.h	33;"	d
+ERROR_EXSTOP	src/pcsc.h	57;"	d
+ERROR_FSDLENTH	src/pn512app.h	40;"	d
+ERROR_INVALID_DATA	src/pn512app.h	42;"	d
+ERROR_NO	src/pn512app.h	28;"	d
+ERROR_NOICCRES	src/pcsc.h	62;"	d
+ERROR_NOIFDRES	src/pcsc.h	61;"	d
+ERROR_NOINF	src/pcsc.h	56;"	d
+ERROR_NOPRESIEDIAGNOSIS	src/pcsc.h	63;"	d
+ERROR_NOTAG	src/pn512app.h	29;"	d
+ERROR_NO_GENERAL	src/pcsc.h	54;"	d
+ERROR_OBJECT_LENGTH	src/pcsc.h	59;"	d
+ERROR_OBJECT_NOTSUPPORTED	src/pcsc.h	58;"	d
+ERROR_OBJECT_VALUE	src/pcsc.h	60;"	d
+ERROR_PARITY	src/pn512app.h	31;"	d
+ERROR_PROTOCOL	src/pn512app.h	30;"	d
+ERROR_SERNR	src/pn512app.h	35;"	d
+ERROR_SPEED	src/pn512app.h	43;"	d
+ERROR_UNKNOW_COMMAND	src/pn512app.h	41;"	d
+ERROR_WARNING	src/pcsc.h	55;"	d
+ERROR_WRONGPARAM	src/pn512app.h	38;"	d
+FALSE	src/common.h	29;"	d
+FEL2_CON_CWGsP	src/felica.h	69;"	d
+FEL2_CON_ModGsP	src/felica.h	66;"	d
+FEL2_CON_RFCfg	src/felica.h	68;"	d
+FEL2_CON_RxThres	src/felica.h	67;"	d
+FEL4_CON_CWGsP	src/felica.h	73;"	d
+FEL4_CON_ModGsP	src/felica.h	70;"	d
+FEL4_CON_RFCfg	src/felica.h	72;"	d
+FEL4_CON_RxThres	src/felica.h	71;"	d
+FELICA_APPLICATION_ALL	src/felica.h	55;"	d
+FELICA_H	src/felica.h	8;"	d
+FELINFFIELDLEN	src/felica.h	60;"	d
+FIFOFlush	src/pn512app.c	/^void FIFOFlush(void)$/;"	f
+FIFORead	src/pn512app.c	/^UINT8 FIFORead(UINT8 *buf, UINT8 len)$/;"	f
+FIFOWrite	src/pn512app.c	/^INT32 FIFOWrite(UINT8 *buf, UINT8 len)$/;"	f
+FLAG_NOPARITYCHECK	src/felica.h	57;"	d
+FLAG_PARITYCHECK	src/felica.h	58;"	d
+FSC	src/picc.h	/^    UINT16 FSC;$/;"	m	struct:piccInfo
+FSCConvertTbl	src/picc.c	/^const UINT16 FSCConvertTbl[9] = {16, 24, 32, 40, 48, 64, 96, 128, 256};$/;"	v
+FSCI	src/picc.h	/^    UINT8 FSCI;        \/\/ codes FSC, FSC defines the maximum size of a fram accepted by the PICC, default 2, 32 bytes( refer to FSCConvertTbl[])$/;"	m	struct:piccInfo
+FSDI	src/picc.h	/^    UINT8 FSDI;        \/\/ codes FSD, FSD defines the maximum size of a fram the PCD is able to receive, default 8, 256 bytes( refer to FSCConvertTbl[])$/;"	m	struct:pcdInfo
+FSDLENTH	src/pn512.h	154;"	d
+FWI	src/picc.h	/^    UINT8 FWI;         \/\/ codes FWT, Frame waiting Time Integer, defines the maximum time for a PICC to start its response after the end of a PCD frame$/;"	m	struct:piccInfo
+FWI_Table	src/part4.c	/^const UINT8 FWI_Table[]=$/;"	v
+FelREQC	src/felica.c	/^static UINT8 FelREQC(UINT8 timeSlot, UINT16 SystemCode)$/;"	f	file:
+FelReqResponse	src/felica.c	/^UINT8 FelReqResponse(void)$/;"	f
+FelTimerSet	src/felica.c	/^static void FelTimerSet(UINT8 *FelCommandBuf)$/;"	f	file:
+FelTransmisionHandle	src/felica.c	/^UINT8 FelTransmisionHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)$/;"	f
+FelXfrHandle	src/felica.c	/^UINT8 FelXfrHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)$/;"	f
+FelicaBulkTransceive	src/felica.c	/^static UINT8 FelicaBulkTransceive(UINT8 *senBuf, UINT8 senLen, UINT8 MaxFirstFIFOLen, UINT8 *recBuf, UINT8 *recLen, BOOL parityCheck)      $/;"	f	file:
+GetBitNumbersReceived	src/pn512app.c	/^UINT8 GetBitNumbersReceived(void)$/;"	f
+GetCID	src/part4.c	/^UINT8 GetCID(UINT8 *uid)$/;"	f
+IFDVersion	src/picc.c	/^const UINT8 IFDVersion[] = {0x01, 0x00, 0x00};$/;"	v
+INT16	src/common.h	/^typedef signed short     INT16;$/;"	t
+INT32	src/common.h	/^typedef signed int       INT32;$/;"	t
+INT64	src/common.h	/^typedef signed long      INT64;$/;"	t
+INT8	src/common.h	/^typedef signed char      INT8;$/;"	t
+KERNELDIR	Makefile	/^KERNELDIR?=\/opt\/acr910\/kernel\/$/;"	m
+LD	Makefile	/^LD=$(CROSS_COMPILE)ld$/;"	m
+MAKEUINT32	src/common.h	40;"	d
+MAKEWORD	src/common.h	39;"	d
+MANAGE_SESSION	src/pcsc.h	21;"	d
+MAX_FIFO_LENGTH	src/pn512.h	153;"	d
+MIFARE_H	src/mifare.h	7;"	d
+MifareAuthent	src/mifare.c	/^static UINT8 MifareAuthent(void)$/;"	f	file:
+MifareAuthentAnalyze	src/mifare.c	/^static UINT8 MifareAuthentAnalyze(UINT8 *MFAuthKey)$/;"	f	file:
+MifareBlockCheck	src/mifare.c	/^static UINT8 MifareBlockCheck(UINT8 srcBlock, UINT8 desBlock, BOOL multBlockMode)$/;"	f	file:
+MifareBlockRead	src/mifare.c	/^static UINT8 MifareBlockRead(UINT8 addr, UINT8 *blockData)$/;"	f	file:
+MifareBlockWrite	src/mifare.c	/^static UINT8 MifareBlockWrite(UINT8 opcode, UINT8 addr, UINT8 *blockData)$/;"	f	file:
+MifareIncDec	src/mifare.c	/^static UINT8 MifareIncDec(UINT8 opcode, UINT8 addr, UINT8 *value)$/;"	f	file:
+MifarePcscCommand	src/mifare.c	/^UINT8 MifarePcscCommand(UINT8 *senBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *recLen)$/;"	f
+MifareSelect	src/mifare.c	/^UINT8 MifareSelect(void)$/;"	f
+NAD	src/picc.h	/^    UINT8 NAD;$/;"	m	struct:pcdInfo
+NAD	src/picc.h	/^    UINT8 NAD;$/;"	m	struct:piccInfo
+NFCInitiatorRegConfig	src/felica.c	/^static void NFCInitiatorRegConfig(UINT8 NFCType)$/;"	f	file:
+NO	src/part4.c	/^    UINT8 NO;$/;"	m	struct:__anon3	file:
+N_16_SLOT	src/typeB.h	33;"	d
+N_1_SLOT	src/typeB.h	29;"	d
+N_2_SLOT	src/typeB.h	30;"	d
+N_4_SLOT	src/typeB.h	31;"	d
+N_8_SLOT	src/typeB.h	32;"	d
+OJ_Idle	src/pcsc.h	26;"	d
+OK	src/common.h	44;"	d
+PAD	src/picc.h	/^    UINT8 PAD[8];    \/\/ used to stored PMm(manufacture parameter, 8 bytes) of felica$/;"	m	struct:piccInfo
+PART4_H	src/part4.h	7;"	d
+PASSDEPI_106	src/felica.h	16;"	d
+PASSDEPI_212	src/felica.h	18;"	d
+PASSDEPI_424	src/felica.h	20;"	d
+PASSDEPT_106	src/felica.h	17;"	d
+PASSDEPT_212	src/felica.h	19;"	d
+PASSDEPT_424	src/felica.h	21;"	d
+PCB	src/picc.h	/^    UINT8 PCB;$/;"	m	struct:pcdInfo
+PCB	src/picc.h	/^    UINT8 PCB;$/;"	m	struct:piccInfo
+PCD-objs	Makefile	/^PCD-objs :=crc.o delay.o felica.o mifare.o \\$/;"	m
+PCDInit	src/pcd.c	/^static INT32 PCDInit(void)$/;"	f	file:
+PCDUninit	src/pcd.c	/^static INT32 PCDUninit(void)$/;"	f	file:
+PCD_Exit	src/pcd.c	/^module_exit(PCD_Exit);$/;"	v
+PCD_Exit	src/pcd.c	/^static void PCD_Exit(void)$/;"	f	file:
+PCD_Init	src/pcd.c	/^module_init(PCD_Init);$/;"	v
+PCD_Init	src/pcd.c	/^static INT32 PCD_Init(void)$/;"	f	file:
+PCD_Open	src/pcd.c	/^static INT32 PCD_Open(struct inode *inode, struct file *filp)$/;"	f	file:
+PCD_PARAM	src/pcd.c	/^}PCD_PARAM;$/;"	t	typeref:struct:__anon1	file:
+PCD_ioctl	src/pcd.c	/^static INT64 PCD_ioctl(struct file *filp, UINT32 cmd, UINT64 arg) $/;"	f	file:
+PCD_release	src/pcd.c	/^static INT32 PCD_release(struct inode *inode, struct file *filp)$/;"	f	file:
+PCSC_H	src/pcsc.h	12;"	d
+PICC_ABSENT	src/picc.h	43;"	d
+PICC_ACTIVATED	src/picc.h	58;"	d
+PICC_FELICA212	src/picc.h	49;"	d
+PICC_FELICA424	src/picc.h	50;"	d
+PICC_H	src/picc.h	9;"	d
+PICC_HALT	src/typeA.h	40;"	d
+PICC_IDLE	src/picc.h	55;"	d
+PICC_MF_DECREMENT	src/mifare.h	25;"	d
+PICC_MF_INCREMENT	src/mifare.h	23;"	d
+PICC_MF_KEY_A	src/mifare.h	18;"	d
+PICC_MF_KEY_B	src/mifare.h	19;"	d
+PICC_MF_READ	src/mifare.h	20;"	d
+PICC_MF_RESTORE	src/mifare.h	24;"	d
+PICC_MF_TRANSFER	src/mifare.h	26;"	d
+PICC_MF_WRITE_16_BYTES	src/mifare.h	21;"	d
+PICC_MF_WRITE_4_BYTES	src/mifare.h	22;"	d
+PICC_MIFARE	src/picc.h	45;"	d
+PICC_MIFARE_KEY	src/mifare.c	/^UINT8 PICC_MIFARE_KEY[2][6] = $/;"	v
+PICC_POWEROFF	src/picc.h	54;"	d
+PICC_READY	src/picc.h	56;"	d
+PICC_REQA	src/typeA.h	33;"	d
+PICC_REQB	src/typeB.h	25;"	d
+PICC_SELECTED	src/picc.h	57;"	d
+PICC_SELVL1	src/typeA.h	36;"	d
+PICC_SELVL2	src/typeA.h	37;"	d
+PICC_SELVL3	src/typeA.h	38;"	d
+PICC_ST_MEMERY	src/picc.h	47;"	d
+PICC_TOPAZ	src/picc.h	48;"	d
+PICC_TYPEA_TCL	src/picc.h	44;"	d
+PICC_TYPEB_TCL	src/picc.h	46;"	d
+PICC_UPDATE	src/picc.h	59;"	d
+PICC_WUPA	src/typeA.h	34;"	d
+PICC_WUPB	src/typeB.h	26;"	d
+PN512	src/pn512.c	/^static struct spi_device *PN512 = NULL; $/;"	v	typeref:struct:spi_device	file:
+PN512APP_H	src/pn512app.h	12;"	d
+PN512_FIFORead	src/pn512.c	/^INT32 PN512_FIFORead(UINT8 *data, UINT8 len)$/;"	f
+PN512_FIFOWrite	src/pn512.c	/^INT32 PN512_FIFOWrite(UINT8 *data, UINT8 len)$/;"	f
+PN512_H	src/pn512.h	12;"	d
+PN512_INT_CFG	src/pn512.c	/^static INT32 PN512_INT_CFG(void)$/;"	f	file:
+PN512_ReadCmd	src/pn512.c	/^static INT32 PN512_ReadCmd(UINT8 *resBuf, UINT32 resLen)$/;"	f	file:
+PN512_RegRead	src/pn512.c	/^UINT8 PN512_RegRead(UINT8 reg)$/;"	f
+PN512_RegWrite	src/pn512.c	/^INT32 PN512_RegWrite(UINT8 reg, UINT8 value)$/;"	f
+PN512_SendCmd	src/pn512.c	/^static INT32 PN512_SendCmd(UINT8 *senBuf, UINT32 senLen)$/;"	f	file:
+PN512_SendThenRead	src/pn512.c	/^static INT32 PN512_SendThenRead(UINT8 *senBuf, UINT8 senLen, UINT8 *recBuf, UINT8 recLen)$/;"	f	file:
+PN512_probe	src/pn512.c	/^static INT32 PN512_probe(struct spi_device *spi)$/;"	f	file:
+PN512_remove	src/pn512.c	/^static INT32 __devexit PN512_remove(struct spi_device *spi)$/;"	f	file:
+PWD	Makefile	/^PWD := $(shell pwd)$/;"	m
+ParamDataObject	src/pcsc.c	/^static UINT8 ParamDataObject(UINT8 *paramCmd, UINT8 *paramRes, UINT16 *recLen, UINT8 WR)$/;"	f	file:
+PcdAttribB	src/typeB.c	/^static UINT8 PcdAttribB(UINT8 *pupi, UINT8 *param, UINT8 *resp)$/;"	f	file:
+PcdConfigIso14443Type	src/pn512app.c	/^void PcdConfigIso14443Type(UINT8 flagConfig, UINT8 cardType)$/;"	f
+PcdHandlerCmd	src/pn512app.c	/^UINT8 PcdHandlerCmd(UINT8 Cmd, UINT8 errorCheckFlag)$/;"	f
+PcdRawExchange	src/pn512app.c	/^UINT8 PcdRawExchange(UINT8 Cmd, UINT8 *senBuf, UINT8 senLen, UINT8 *recBuf, UINT8 *recLen)      $/;"	f
+PcdRequestA	src/typeA.c	/^UINT8 PcdRequestA(UINT8 reqCmd, UINT8 *pATQ)$/;"	f
+PcdRequestATS	src/part4.c	/^UINT8 PcdRequestATS(void)$/;"	f
+PcdSetTimeout	src/part4.c	/^void PcdSetTimeout(UINT8 timeout)$/;"	f
+PcdTCLCmd	src/part4.c	/^static UINT8 PcdTCLCmd(UINT8 *senBuf, UINT8 senLen, UINT8 *recBuf, UINT8 *recLen)$/;"	f	file:
+PcscAtrBuild	src/pcsc.c	/^void PcscAtrBuild(UINT8 *atrBuf, UINT16 *atrLen)$/;"	f
+PcscIfdCmdDispatch	src/pcsc.c	/^UINT8 PcscIfdCmdDispatch(UINT8 cmdtype, UINT8 *cmdBuf, UINT8 cmdlen, UINT8 *resBuf, UINT16 *resLen)$/;"	f
+PcscTrsprtExchange	src/pcsc.c	/^static UINT8 PcscTrsprtExchange(UINT8 cmd, UINT8 *senBuf, UINT8 senLen, UINT8 *recBuf, UINT16 *RecLen)      $/;"	f	file:
+PiccCascAnticoll	src/typeA.c	/^static UINT8 PiccCascAnticoll (UINT8 selCode, UINT8 *uid)       $/;"	f	file:
+PiccCascSelect	src/typeA.c	/^UINT8 PiccCascSelect(UINT8 selCode, UINT8 *uid, UINT8 *sak)$/;"	f
+PiccHaltA	src/typeA.c	/^void PiccHaltA(void)$/;"	f
+PiccHaltB	src/typeB.c	/^UINT8 PiccHaltB(UINT8 *pupi)$/;"	f
+PiccHighSpeedConfig	src/part4.c	/^void PiccHighSpeedConfig(UINT8 speedParam, UINT8 typeB)$/;"	f
+PiccInit	src/picc.c	/^void PiccInit(void)$/;"	f
+PiccPPSCheckAndSend	src/part4.c	/^void PiccPPSCheckAndSend(void)$/;"	f
+PiccPoll	src/picc.c	/^void PiccPoll(void)$/;"	f
+PiccPowerON	src/picc.c	/^UINT8 PiccPowerON(UINT8 *atrBuf, UINT16 *atrLen)$/;"	f
+PiccPowerOff	src/picc.c	/^void PiccPowerOff(void)$/;"	f
+PiccRequestB	src/typeB.c	/^UINT8 PiccRequestB(UINT8 reqCmd, UINT8 N)$/;"	f
+PiccReset	src/picc.c	/^void PiccReset(void)$/;"	f
+PiccSfgDelay	src/part4.c	/^static void PiccSfgDelay(UINT8 TimeDelay)$/;"	f	file:
+PiccSlotMarker	src/typeB.c	/^static UINT8 PiccSlotMarker(UINT8 N)$/;"	f	file:
+PiccSpeedCheck	src/part4.c	/^UINT8 PiccSpeedCheck(void)$/;"	f
+PiccStandardApduTCL	src/part4.c	/^UINT8 PiccStandardApduTCL(UINT8 *cmdBuf, UINT16 senLen, UINT8 *recBuf, UINT16 *recLen, UINT8 *level)$/;"	f
+PiccXfrDataExchange	src/picc.c	/^UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen, UINT8 *level)$/;"	f
+Pn512Init	src/pn512.c	/^INT32 Pn512Init(void)$/;"	f
+Pn512Uninit	src/pn512.c	/^INT32 Pn512Uninit(void)$/;"	f
+PollFeliCaTags	src/felica.c	/^void PollFeliCaTags(UINT8 feliType)$/;"	f
+PollTopazTags	src/topaz.c	/^void PollTopazTags(void)$/;"	f
+PollTypeATags	src/typeA.c	/^void PollTypeATags(void)$/;"	f
+PollTypeBTags	src/typeB.c	/^void PollTypeBTags(void)$/;"	f
+PrtMsg	src/debug.h	16;"	d
+PrtMsg	src/debug.h	18;"	d
+RCRegFactor	src/pn512app.c	/^UINT8 RCRegFactor[19] = $/;"	v
+REG_ANALOGTEST	src/pn512.h	133;"	d
+REG_AUTOTEST	src/pn512.h	131;"	d
+REG_BITFRAMING	src/pn512.h	68;"	d
+REG_COLL	src/pn512.h	70;"	d
+REG_COMMAND	src/pn512.h	26;"	d
+REG_COMMIEN	src/pn512.h	27;"	d
+REG_COMMIRQ	src/pn512.h	38;"	d
+REG_CONTROL	src/pn512.h	65;"	d
+REG_CRCRESULTLSB	src/pn512.h	105;"	d
+REG_CRCRESULTMSB	src/pn512.h	104;"	d
+REG_CWGSP	src/pn512.h	111;"	d
+REG_DEMOD	src/pn512.h	92;"	d
+REG_DIVIEN	src/pn512.h	28;"	d
+REG_DIVIRQ	src/pn512.h	40;"	d
+REG_ERROR	src/pn512.h	50;"	d
+REG_FELNFC1	src/pn512.h	93;"	d
+REG_FELNFC2	src/pn512.h	94;"	d
+REG_FIFODATA	src/pn512.h	57;"	d
+REG_FIFOLEVEL	src/pn512.h	58;"	d
+REG_GSNOFF	src/pn512.h	106;"	d
+REG_GSNON	src/pn512.h	110;"	d
+REG_MANUALRCV	src/pn512.h	98;"	d
+REG_MIFNFC	src/pn512.h	95;"	d
+REG_MODE	src/pn512.h	75;"	d
+REG_MODGSP	src/pn512.h	112;"	d
+REG_MODWIDTH	src/pn512.h	107;"	d
+REG_PAGE	src/pn512.h	25;"	d
+REG_RFCFG	src/pn512.h	109;"	d
+REG_RXMODE	src/pn512.h	82;"	d
+REG_RXSEL	src/pn512.h	90;"	d
+REG_RXTHRESHOLD	src/pn512.h	91;"	d
+REG_SERIALSPEED	src/pn512.h	101;"	d
+REG_STATUS1	src/pn512.h	52;"	d
+REG_STATUS2	src/pn512.h	55;"	d
+REG_TCOUNTERVAL_HI	src/pn512.h	122;"	d
+REG_TCOUNTERVAL_LO	src/pn512.h	123;"	d
+REG_TESTBUS	src/pn512.h	130;"	d
+REG_TESTDAC	src/pn512.h	136;"	d
+REG_TESTDAC1	src/pn512.h	134;"	d
+REG_TESTDAC2	src/pn512.h	135;"	d
+REG_TESTPINEN	src/pn512.h	128;"	d
+REG_TESTPINVALUE	src/pn512.h	129;"	d
+REG_TESTSEL1	src/pn512.h	126;"	d
+REG_TESTSEL2	src/pn512.h	127;"	d
+REG_TMODE	src/pn512.h	116;"	d
+REG_TPRESCALER	src/pn512.h	118;"	d
+REG_TRELOADVAL_HI	src/pn512.h	120;"	d
+REG_TRELOADVAL_LO	src/pn512.h	121;"	d
+REG_TXAUTO	src/pn512.h	87;"	d
+REG_TXBITPHASE	src/pn512.h	108;"	d
+REG_TXCONTROL	src/pn512.h	84;"	d
+REG_TXMODE	src/pn512.h	78;"	d
+REG_TXSEL	src/pn512.h	89;"	d
+REG_TYPEB	src/pn512.h	100;"	d
+REG_VERSION	src/pn512.h	132;"	d
+REG_WATERLEVEL	src/pn512.h	59;"	d
+RES_AUTH1	src/felica.h	41;"	d
+RES_AUTH2	src/felica.h	43;"	d
+RES_GENERICERR	src/pcsc.h	45;"	d
+RES_ICCRESPONSE	src/pcsc.h	50;"	d
+RES_NUMOFVALIDBITS	src/pcsc.h	48;"	d
+RES_PARAMETERS	src/pcsc.h	47;"	d
+RES_READFROMSECURE	src/felica.h	45;"	d
+RES_READ_NONEAUTH	src/felica.h	37;"	d
+RES_REQC	src/felica.h	31;"	d
+RES_REQRESPONSE	src/felica.h	35;"	d
+RES_REQSERVICE	src/felica.h	33;"	d
+RES_RESPONSESTATUS	src/pcsc.h	49;"	d
+RES_VERSIONDATA	src/pcsc.h	46;"	d
+RES_WRITETOSECURE	src/felica.h	47;"	d
+RES_WRITE_NONEAUTH	src/felica.h	39;"	d
+RF_FEL_CON_LEN	src/felica.h	65;"	d
+RcLongTimerSet	src/pcsc.c	/^static void RcLongTimerSet(UINT32 timeVal)$/;"	f	file:
+RegRead	src/pn512app.c	/^UINT8 RegRead(UINT8 reg)$/;"	f
+RegWrite	src/pn512app.c	/^void RegWrite(UINT8 reg, UINT8 value)$/;"	f
+ReleaseCID	src/part4.c	/^void ReleaseCID(UINT8 cid)$/;"	f
+RunPiccPoll	src/pcd.c	/^void RunPiccPoll(struct work_struct *work)$/;"	f
+RxAThres106	src/pn512app.h	49;"	d
+RxAThres212	src/pn512app.h	50;"	d
+RxAThres424	src/pn512app.h	51;"	d
+RxAThres848	src/pn512app.h	52;"	d
+RxBThres106	src/pn512app.h	53;"	d
+RxBThres212	src/pn512app.h	54;"	d
+RxBThres424	src/pn512app.h	55;"	d
+RxBThres848	src/pn512app.h	56;"	d
+SAK	src/picc.h	/^    UINT8 SAK;$/;"	m	struct:piccInfo
+SAK_MIFARE_1K	src/typeA.h	45;"	d
+SAK_MIFARE_4K	src/typeA.h	46;"	d
+SAK_MIFARE_MINI	src/typeA.h	48;"	d
+SAK_MIFARE_ULTRALIGHT	src/typeA.h	47;"	d
+SAK_SLE66R35	src/typeA.h	49;"	d
+SAK_TYPEA_TCL	src/typeA.h	44;"	d
+SET_BIT	src/common.h	33;"	d
+SFGI	src/picc.h	/^    UINT8 SFGI;        \/\/ codes amultiplier value used to define the SFGT, SFGT defines guard time needed by the PICC before it is ready to receive the next fram after it has sent the ATS$/;"	m	struct:piccInfo
+SLOTERROR_CMD_ABORTED	src/picc.h	62;"	d
+SLOTERROR_HW_ERROR	src/picc.h	66;"	d
+SLOTERROR_ICC_MUTE	src/picc.h	63;"	d
+SLOTERROR_T1_3RETRY_FAIL_RESYNCH_FAIL	src/part4.h	16;"	d
+SLOTERROR_T1_3RETRY_FAIL_RESYNCH_PASS	src/part4.h	15;"	d
+SLOTERROR_T1_CHECKSUM_ERROR	src/part4.h	17;"	d
+SLOTERROR_T1_LEN_INF_CONFLICT	src/part4.h	19;"	d
+SLOTERROR_T1_OTHER_ERROR	src/part4.h	18;"	d
+SLOTERROR_TCL_3RETRANSMIT_FAIL	src/part4.h	22;"	d
+SLOTERROR_TCL_3RETRY_TIMEOUT	src/part4.h	23;"	d
+SLOTERROR_TCL_BLOCK_INVALID	src/part4.h	24;"	d
+SLOTERROR_XFR_OVERRUN	src/picc.h	65;"	d
+SLOTERROR_XFR_PARITY_ERROR	src/picc.h	64;"	d
+SLOT_ERROR	src/mifare.h	29;"	d
+SLOT_NO_ERROR	src/picc.h	61;"	d
+SWCH_FELICA	src/pcsc.h	70;"	d
+SWCH_HF_EPC_G2_ISO18000_3	src/pcsc.h	73;"	d
+SWCH_ICODE_1	src/pcsc.h	72;"	d
+SWCH_ICODE_EPC_UID	src/pcsc.h	71;"	d
+SWCH_INNOVATRON	src/pcsc.h	74;"	d
+SWCH_ISO14443_TYPEA	src/pcsc.h	67;"	d
+SWCH_ISO14443_TYPEB	src/pcsc.h	68;"	d
+SWCH_ISO15693	src/pcsc.h	69;"	d
+SWCH_NO_LAYER_SEPARATION	src/pcsc.h	76;"	d
+SWCH_TO_HIGHLEVEL_PROTOCOL	src/pcsc.h	82;"	d
+SWCH_TO_LAYER_2	src/pcsc.h	77;"	d
+SWCH_TO_LAYER_2X	src/pcsc.h	80;"	d
+SWCH_TO_LAYER_3	src/pcsc.h	78;"	d
+SWCH_TO_LAYER_3X	src/pcsc.h	81;"	d
+SWCH_TO_LAYER_4	src/pcsc.h	79;"	d
+SWITCH_PROTOCOL	src/pcsc.h	23;"	d
+SetPN512Timer	src/pn512.c	/^void SetPN512Timer(UINT16 timeOut)$/;"	f
+SetRegBit	src/pn512app.c	/^void SetRegBit(UINT8 reg, UINT8 bit)$/;"	f
+SetTimer100us	src/delay.c	/^void SetTimer100us(UINT16 timeOut)$/;"	f
+SpiInit	src/spi.c	/^INT32 SpiInit(void)$/;"	f
+SpiRead	src/spi.c	/^UINT8 SpiRead(void)$/;"	f
+SpiReg	src/spi.h	/^}SpiReg;$/;"	t	typeref:struct:__anon2
+SpiSend	src/spi.c	/^void SpiSend(UINT8 *senBuf, UINT8 senLen)$/;"	f
+StandardAttribB	src/typeB.c	/^static UINT8 StandardAttribB(void)$/;"	f	file:
+TCLDataSendErrorCheck	src/part4.c	/^static UINT8 TCLDataSendErrorCheck(UINT8 *senBuf, UINT8 senLen, UINT8 *recBuf, UINT8 *recLen)$/;"	f	file:
+TCLPrologueFieldLoad	src/part4.c	/^void TCLPrologueFieldLoad(void)$/;"	f
+TCL_Select	src/part4.c	/^UINT8 TCL_Select(UINT8 blockPCB)$/;"	f
+TOGGLE_BIT	src/common.h	35;"	d
+TOPAZ_H	src/topaz.h	6;"	d
+TOPAZ_RALL	src/topaz.h	18;"	d
+TOPAZ_READ	src/topaz.h	19;"	d
+TOPAZ_RID	src/topaz.h	17;"	d
+TOPAZ_WRITE_E	src/topaz.h	20;"	d
+TOPAZ_WRITE_NE	src/topaz.h	21;"	d
+TRANSPARENT_EXCHANGE	src/pcsc.h	22;"	d
+TRUE	src/common.h	28;"	d
+TYPEA_106RX	src/typeA.h	25;"	d
+TYPEA_106TX	src/typeA.h	24;"	d
+TYPEA_212RX	src/typeA.h	27;"	d
+TYPEA_212TX	src/typeA.h	26;"	d
+TYPEA_424RX	src/typeA.h	29;"	d
+TYPEA_424TX	src/typeA.h	28;"	d
+TYPEA_848RX	src/typeA.h	31;"	d
+TYPEA_848TX	src/typeA.h	30;"	d
+TYPEA_H	src/typeA.h	13;"	d
+TYPEB_106RX	src/typeB.h	16;"	d
+TYPEB_106TX	src/typeB.h	15;"	d
+TYPEB_212RX	src/typeB.h	18;"	d
+TYPEB_212TX	src/typeB.h	17;"	d
+TYPEB_424RX	src/typeB.h	20;"	d
+TYPEB_424TX	src/typeB.h	19;"	d
+TYPEB_848RX	src/typeB.h	22;"	d
+TYPEB_848TX	src/typeB.h	21;"	d
+TYPEB_H	src/typeB.h	6;"	d
+TclRBlockCmd	src/part4.c	/^static UINT8 TclRBlockCmd(UINT8 blockPCB, UINT8 *recBuf, UINT8 *recLen)$/;"	f	file:
+TopazPcdHandler	src/topaz.c	/^static UINT8 TopazPcdHandler(UINT8 *cmdBuf, UINT8 cmdLen, UINT8 *resBuf, UINT8 *resLen, UINT16 timeout)$/;"	f	file:
+TopazRID	src/topaz.c	/^static UINT8 TopazRID(void)       $/;"	f	file:
+TopazTransmissionHandle	src/topaz.c	/^UINT8 TopazTransmissionHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)$/;"	f
+TopazXfrHandle	src/topaz.c	/^UINT8 TopazXfrHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen)$/;"	f
+TypeACWGsP	src/pn512app.h	65;"	d
+TypeASelect	src/typeA.c	/^UINT8 TypeASelect(void)$/;"	f
+TypeBCWGsP	src/pn512app.h	66;"	d
+UID	src/part4.c	/^    UINT8 *UID;$/;"	m	struct:__anon3	file:
+UINT16	src/common.h	/^typedef unsigned short   UINT16;$/;"	t
+UINT32	src/common.h	/^typedef unsigned int     UINT32;$/;"	t
+UINT64	src/common.h	/^typedef unsigned long    UINT64;$/;"	t
+UINT8	src/common.h	/^typedef unsigned char    UINT8;$/;"	t
+WTXM	src/picc.h	/^    UINT8 WTXM;$/;"	m	struct:piccInfo
+__this_module	PCD.mod.c	/^struct module __this_module$/;"	v	typeref:struct:module
+__used	PCD.mod.c	/^__used$/;"	v	file:
+__used	PCD.mod.c	/^__used$/;"	v	typeref:struct:____versions	file:
+attrPara	src/picc.h	/^    UINT8 attrPara[4];$/;"	m	struct:piccInfo
+authNeed	src/mifare.h	/^    volatile UINT8 authNeed;$/;"	m	struct:mifareInfo
+block	src/mifare.h	/^    volatile UINT8 block;$/;"	m	struct:mifareInfo
+cdev	src/pcd.c	/^    struct cdev cdev;$/;"	m	struct:pcd_dev	typeref:struct:pcd_dev::cdev	file:
+chxConf	src/spi.h	/^    volatile UINT32 chxConf;$/;"	m	struct:__anon2
+chxCtrl	src/spi.h	/^    volatile UINT32 chxCtrl;$/;"	m	struct:__anon2
+chxStat	src/spi.h	/^    volatile UINT32 chxStat;$/;"	m	struct:__anon2
+curSpeed	src/picc.h	/^    UINT8 curSpeed;$/;"	m	struct:pcdInfo
+driverVersion	src/picc.c	/^const UINT8 driverVersion[] = {'1', '.', '0', '0'};$/;"	v
+feliSysCode	src/felica.c	/^UINT16 feliSysCode = FELICA_APPLICATION_ALL;$/;"	v
+fgAutoPoll	src/picc.h	/^    UINT8  fgAutoPoll;$/;"	m	struct:pcdInfo
+fgStatus	src/pcsc.h	/^    volatile UINT8 fgStatus;$/;"	m	struct:pcscInfo
+fgTCL	src/picc.h	/^    UINT8 fgTCL;$/;"	m	struct:piccInfo
+fgTxRx	src/pcsc.h	/^    volatile UINT8 fgTxRx;$/;"	m	struct:pcscInfo
+filterType	src/picc.h	/^    UINT8 filterType;$/;"	m	struct:pcdInfo
+firmwareVersion	src/picc.c	/^const UINT8 firmwareVersion[] = {'A', 'C', 'R', '8', '9', '0', ' ', '1', '0', '0'};$/;"	v
+gaFelRFCon	src/felica.c	/^const UINT8 gaFelRFCon[RF_FEL_CON_LEN] = {0x85, 0x69, 0x3f, 0x11, 0x55, 0x69, 0x3f};$/;"	v
+iDataLen	src/pcd.c	/^    UINT32  iDataLen;$/;"	m	struct:__anon1	file:
+irqEnable	src/spi.h	/^    volatile UINT32 irqEnable;$/;"	m	struct:__anon2
+irqStatus	src/spi.h	/^    volatile UINT32 irqStatus;$/;"	m	struct:__anon2
+keyNo	src/mifare.h	/^    volatile UINT8 keyNo;$/;"	m	struct:mifareInfo
+keyType	src/mifare.h	/^    volatile UINT8 keyType;$/;"	m	struct:mifareInfo
+keyValid	src/mifare.h	/^    volatile UINT8 keyValid;$/;"	m	struct:mifareInfo
+lastRxValBits	src/pcsc.h	/^    volatile UINT8 lastRxValBits;$/;"	m	struct:pcscInfo
+lastTxValBits	src/pcsc.h	/^    volatile UINT8 lastTxValBits;$/;"	m	struct:pcscInfo
+maxSpeed	src/picc.h	/^    UINT8 maxSpeed;    \/\/ Maximum communication speed supported by the IFD$/;"	m	struct:pcdInfo
+mifare	src/mifare.c	/^struct mifareInfo mifare;$/;"	v	typeref:struct:mifareInfo
+mifareInfo	src/mifare.h	/^struct mifareInfo$/;"	s
+moduleCtrl	src/spi.h	/^    volatile UINT32 moduleCtrl;$/;"	m	struct:__anon2
+nextCmd	src/pcsc.h	/^    volatile UINT8 nextCmd;$/;"	m	struct:pcscInfo
+oDataLen	src/pcd.c	/^    UINT32  oDataLen;$/;"	m	struct:__anon1	file:
+obj-m	Makefile	/^obj-m := PCD.o$/;"	m
+p_iBuf	src/pcd.c	/^    UINT8 *p_iBuf;$/;"	m	struct:__anon1	file:
+p_oBuf	src/pcd.c	/^    UINT8 *p_oBuf;$/;"	m	struct:__anon1	file:
+pcd	src/picc.c	/^struct pcdInfo pcd;$/;"	v	typeref:struct:pcdInfo
+pcdInfo	src/picc.h	/^struct pcdInfo$/;"	s
+pcdPoll	src/pcd.c	/^static struct workqueue_struct *pcdPoll = NULL;$/;"	v	typeref:struct:workqueue_struct	file:
+pcd_dev	src/pcd.c	/^struct pcd_dev$/;"	s	file:
+pcd_fops	src/pcd.c	/^static struct file_operations pcd_fops=$/;"	v	typeref:struct:file_operations	file:
+pcd_misc	src/pcd.c	/^static struct miscdevice pcd_misc=$/;"	v	typeref:struct:miscdevice	file:
+pcd_mutex	src/pcd.c	/^static struct semaphore pcd_mutex;$/;"	v	typeref:struct:semaphore	file:
+pcsc	src/pcsc.c	/^struct pcscInfo pcsc;$/;"	v	typeref:struct:pcscInfo
+pcscInfo	src/pcsc.h	/^struct pcscInfo$/;"	s
+picc	src/picc.c	/^struct piccInfo picc;$/;"	v	typeref:struct:piccInfo
+piccInfo	src/picc.h	/^struct piccInfo$/;"	s
+piccPoll	src/picc.h	/^    BOOL  piccPoll;$/;"	m	struct:pcdInfo
+pn512_driver	src/pn512.c	/^static struct spi_driver pn512_driver =$/;"	v	typeref:struct:spi_driver	file:
+pn512_id_table	src/pn512.c	/^static const struct spi_device_id pn512_id_table[] =$/;"	v	typeref:struct:spi_device_id	file:
+pollDelay	src/picc.h	/^    UINT16 pollDelay;$/;"	m	struct:pcdInfo
+preCmd	src/pcsc.h	/^    volatile UINT8 preCmd;$/;"	m	struct:pcscInfo
+productName	src/picc.c	/^const UINT8 productName[] = {'A', 'C', 'R', '8', '9', '0'};$/;"	v
+resATTRIB	src/picc.h	/^    UINT8 resATTRIB[7];$/;"	m	struct:piccInfo
+rx	src/spi.h	/^    volatile UINT32 rx;$/;"	m	struct:__anon2
+sPart4	src/picc.h	/^    UINT8 sPart4;    \/\/ if support ISO14443-4$/;"	m	struct:piccInfo
+selectCmd	src/typeA.c	/^const UINT8 selectCmd[3] = {PICC_SELVL1, PICC_SELVL2, PICC_SELVL3};$/;"	v
+sem_inc	src/pcd.c	/^static UINT8 sem_inc = 0;$/;"	v	file:
+sn	src/picc.h	/^    UINT8 sn[10];    \/\/ used to stored UID(type A, MAX 10 bytes), PUPI(type B, 4 bytes), NFCID2(felica, 8 bytes)$/;"	m	struct:piccInfo
+snLen	src/picc.h	/^    UINT8 snLen;$/;"	m	struct:piccInfo
+speed	src/picc.h	/^    UINT8 speed;       \/\/ stored TA(1), specify the divisor D for each direction$/;"	m	struct:piccInfo
+spi	src/spi.c	/^static SpiReg *spi = NULL;;$/;"	v	file:
+src	Makefile	/^src:=src$/;"	m
+states	src/picc.h	/^    UINT8 states;    \/\/ picc states $/;"	m	struct:piccInfo
+status	src/picc.h	/^    volatile UINT8 status;$/;"	m	struct:piccInfo
+sysCode	src/picc.h	/^    UINT8 sysCode[2];    $/;"	m	struct:piccInfo
+sysConfig	src/spi.h	/^    volatile UINT32 sysConfig;$/;"	m	struct:__anon2
+sysStatus	src/spi.h	/^    volatile UINT32 sysStatus;$/;"	m	struct:__anon2
+syst	src/spi.h	/^    volatile UINT32 syst;$/;"	m	struct:__anon2
+tempIBlockBuf	src/part4.c	/^UINT8 tempIBlockBuf[253];$/;"	v
+trsStatus	src/pcsc.h	/^    volatile UINT8 trsStatus;$/;"	m	struct:pcscInfo
+tx	src/spi.h	/^    volatile UINT32 tx;$/;"	m	struct:__anon2
+type	src/picc.h	/^    UINT8 type;      \/\/ picc type$/;"	m	struct:piccInfo
+used	src/part4.c	/^    BOOL  used;$/;"	m	struct:__anon3	file:
+vendorName	src/picc.c	/^const UINT8 vendorName[] = {'A', 'C', 'S'};$/;"	v
+wakeupEnable	src/spi.h	/^    volatile UINT32 wakeupEnable;$/;"	m	struct:__anon2
+workKey	src/mifare.h	/^    volatile UINT8 workKey[6];$/;"	m	struct:mifareInfo

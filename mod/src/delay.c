@@ -1,9 +1,3 @@
-/*
-* Name: Delay source file
-* Date: 2012/12/04
-* Author: Alex Wang
-* Version: 1.0
-*/
 
 
 #include <linux/delay.h>
@@ -13,14 +7,14 @@
 
 
 
-void Delay1us(UINT32 delay)
+void Delay1us(u32 delay)
 {
     udelay(delay);
 }
 
-void Delay256us(UINT8 delay)
+void Delay256us(u8 delay)
 {
-    volatile UINT8 i;
+    volatile u8 i;
 
 
     while (delay--)
@@ -30,9 +24,9 @@ void Delay256us(UINT8 delay)
     }
 }
 
-void Delay256P2us(UINT8 delay)
+void Delay256P2us(u8 delay)
 {
-    UINT8 i;
+    u8 i;
 
     
     for(i = 0; i < delay; i++)
@@ -42,9 +36,9 @@ void Delay256P2us(UINT8 delay)
     }
 }
 
-void Delay256P3us(UINT8 delay)
+void Delay256P3us(u8 delay)
 {
-    UINT8 i;
+    u8 i;
     
     
     for(i = 0; i < delay; i++)
@@ -55,14 +49,14 @@ void Delay256P3us(UINT8 delay)
 }
 
 
-void Delay1ms(UINT32 delay)
+void Delay1ms(u32 delay)
 {
     mdelay(delay);
 }
 
-void Delay1s(UINT8 delay)
+void Delay1s(u8 delay)
 {
-    UINT8 i;
+    u8 i;
 
 
     for(i = 0; i < delay; i++)
@@ -70,9 +64,9 @@ void Delay1s(UINT8 delay)
         mdelay(1000);
     }
 }
-void SetTimer100us(UINT16 timeOut)
+void SetTimer100us(u16 timeOut)
 {
-    SetPN512Timer(timeOut);
+    set_pn512_timer(timeOut);
 }
 
 

@@ -54,10 +54,8 @@
 
 #define FELICA_APPLICATION_ALL     0xFFFF        // all PICC shall respond when the system code is 'FFFF'
 
-#define FLAG_NOPARITYCHECK  FALSE
-#define FLAG_PARITYCHECK    TRUE
 
-#define FELINFFIELDLEN      254    // the legth of Information field of felica, LEN + Data
+
 
 
 
@@ -72,15 +70,13 @@
 #define     FEL4_CON_RFCfg      6
 #define     FEL4_CON_CWGsP      7
 
-extern const UINT8 gaFelRFCon[RF_FEL_CON_LEN];
 
 
 
-UINT8 FelTransmisionHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen);
-UINT8 FelXfrHandle(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen);
-UINT8 FelReqResponse(void);
-void PollFeliCaTags(UINT8 feliType);
 
+void felica_polling_tags(struct picc_device *picc, u8 feliType);
+int felica_request_response(struct picc_device *picc);
+int felica_xfr_handler(struct picc_device *picc, u8 *cmdBuf, u32 cmdLen, u8 *resBuf, u32 *resLen);
 
 #endif
 

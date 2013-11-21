@@ -1,399 +1,448 @@
-/*
-* Name: PICC source file
-* Date: 2012/12/04
-* Author: Alex Wang
-* Version: 1.0
-*/
-
-
 
 #include <linux/string.h>
+#include <linux/err.h>
+
 
 #include "common.h"
 #include "picc.h"
-#include "pn512app.h"
 #include "pn512.h"
 #include "delay.h"
-#include "typeA.h"
-#include "typeB.h"
+#include "iso14443_typeA.h"
+#include "iso14443_typeB.h"
 #include "felica.h"
 #include "topaz.h"
 #include "pcsc.h"
 #include "mifare.h"
-#include "part4.h"
-#include "debug.h"
-
-
-extern void RunPiccPoll(void);
+#include "iso14444.h"
 
 
 
 
+static const u8 vendorName[] = {'A', 'C', 'S'};
+static const u8 productName[] = {'A', 'C', 'R', '8', '9', '0'};
+static const u8 driverVersion[] = {'1', '.', '0', '0'};
+static const u8 firmwareVersion[] = {'A', 'C', 'R', '8', '9', '0', ' ', '1', '0', '0'};
+const u8 IFDVersion[] = {0x01, 0x00, 0x00};
 
-struct pcdInfo pcd;
-struct piccInfo picc;
-
-
-
-const UINT8 vendorName[] = {'A', 'C', 'S'};
-const UINT8 productName[] = {'A', 'C', 'R', '8', '9', '0'};
-const UINT8 driverVersion[] = {'1', '.', '0', '0'};
-const UINT8 firmwareVersion[] = {'A', 'C', 'R', '8', '9', '0', ' ', '1', '0', '0'};
-const UINT8 IFDVersion[] = {0x01, 0x00, 0x00};
-
-const UINT16 FSCConvertTbl[9] = {16, 24, 32, 40, 48, 64, 96, 128, 256};
+const u16 FSCConvertTbl[9] = {16, 24, 32, 40, 48, 64, 96, 128, 256};
 
 
 
 
 
+
+
+void picc_wait_for_req(struct pn512_request *req)
+{	
+	req->actual = 0;
+	req->error_code = 0;
+	req->rx_last_bits = 0;
+	req->tx_done = 0;
+	pn512_process_request(req);
+}
+
+
+#ifdef USECID
+
+typedef struct
+{
+    u8 NO;
+    u8 *UID;
+    BOOL  used;
+}CIDInfo;
+
+CIDInfo CIDNO[15];
+
+static void cid_init(void)
+{
+    u8 i;
+
+    for(i = 0; i < 15; i++)
+    {
+        CIDNO[i].NO   = i;
+        CIDNO[i].UID  = NULL;
+        CIDNO[i].used = FALSE;
+    }
+}
+
+static void free_cid(u8 cid)
+{
+    CIDNO[cid].UID  = NULL:
+    CIDNO[cid].used = FALSE;
+}
+
+#endif
+
+u8 get_cid(u8 *uid)
+{
+#ifdef USECID
+
+    UINT i = 0;
+
+
+    do
+    {
+        if(CIDNO[i].used == TRUE)
+        {
+            i++;
+        }
+        else
+        {
+            break;
+        }
+    }while(i < 15);
+
+    CIDNO[i].used = TRUE;
+    CIDNO[i].UID  = uid;
+
+    return(CIDNO[i].NO);
+#else
+    return(0);
+#endif
+}
 
 
 /******************************************************************/
 //       PICC reset
 /******************************************************************/
-void PiccReset(void)
+void picc_reset(struct picc_device *picc)
 {
-    RegWrite(REG_TXCONTROL, 0x00);    // Turn off the Antenna
+    turn_off_antenna();    // Turn off the Antenna
     Delay1ms(9);
-    RegWrite(REG_TXCONTROL, 0x83);    // Turn on the Antenna
-    picc.states = PICC_IDLE;
+    turn_on_antenna();    // Turn on the Antenna
+    picc->states = PICC_IDLE;
 }
 
 
-void PiccPoll(void)
+static void picc_polling_tags(struct picc_device *picc)
 {
-    UINT8 piccCode = 0x00;
+    bool card_still_preset = FALSE;
     
 
-    PrtMsg(DBGL4, "%s: start, piccType = %02X\n", __FUNCTION__, picc.type);
+    TRACE_TO("enter %s\n", __func__);
 
-    if(BITISCLEAR(picc.status, BIT_PRESENT))        //Case 1: No card present before 
+    if(BITISCLEAR(picc->status, PRESENT))        //Case 1: No card present before 
     {
-        picc.type = PICC_ABSENT;
-        AntennaPower(1);
+        picc->type = PICC_ABSENT;
+		picc->name = "none";
+        turn_on_antenna();
 
-        if(BITISSET(pcd.filterType, BIT_TYPEAPOLL))
+        if(BITISSET(picc->pcd->support_card_type, TYPEA))
         {
             Delay1ms(10);
-            PollTypeATags();
+            typeA_polling_tags(picc);
         }
-        if((picc.type == PICC_ABSENT) && (BITISSET(pcd.filterType, BIT_TYPEBPOLL)))
+        if((picc->type == PICC_ABSENT) && (BITISSET(picc->pcd->support_card_type, TYPEB)))
         {
             Delay1ms(6);
-            PollTypeBTags();
+            typeB_polling_tags(picc);
         }
-        if((picc.type == PICC_ABSENT) && (BITISSET(pcd.filterType, BIT_FEL212POLL)))
+        if((picc->type == PICC_ABSENT) && (BITISSET(picc->pcd->support_card_type, FELICA212)))
         {
             Delay1ms(5);
-            PollFeliCaTags(PASSDEPI_212);
+            felica_polling_tags(picc, PASSDEPI_212);
         }
-        if((picc.type == PICC_ABSENT) && (BITISSET(pcd.filterType, BIT_FEL424POLL)))
+        if((picc->type == PICC_ABSENT) && (BITISSET(picc->pcd->support_card_type, FELICA414)))
         {
             Delay1ms(5);
-            PollFeliCaTags(PASSDEPI_424);
+            felica_polling_tags(picc, PASSDEPI_424);
         }
-        if((picc.type == PICC_ABSENT) && (BITISSET(pcd.filterType, BIT_TOPAZPOLL)))
+        if((picc->type == PICC_ABSENT) && (BITISSET(picc->pcd->support_card_type, TOPAZ)))
         {
             Delay1ms(5);
-            PollTopazTags();
+            topaz_polling_tags(picc);
         }
 
         
-        if(picc.type == PICC_ABSENT)
+        if(picc->type == PICC_ABSENT)
         {
             //No Tag found
-            CLEAR_BIT(picc.status, BIT_PRESENT);
-            CLEAR_BIT(picc.status, BIT_FIRSTINSERT);
-            CLEAR_BIT(picc.status, BIT_ACTIVATED);
-            mifare.keyValid = 0x00;
+            turn_off_antenna();
+            CLEAR_BIT(picc->status, PRESENT);
+            CLEAR_BIT(picc->status, FIRST_INSERT);
+            CLEAR_BIT(picc->status, ACTIVATED);
+            picc->key_valid = 0x00;
         }
         else
         {
             //Tag found
-            SET_BIT(picc.status, BIT_PRESENT);        // Card Inserted
-            SET_BIT(picc.status, BIT_FIRSTINSERT);
-            SET_BIT(picc.status, BIT_ACTIVATED);
-            SET_BIT(picc.status, BIT_SLOTCHANGE);
-            pcd.pollDelay = 1000;
+            SET_BIT(picc->status, PRESENT);        // Card Inserted
+            SET_BIT(picc->status, FIRST_INSERT);
+            SET_BIT(picc->status, ACTIVATED);
+            SET_BIT(picc->status, SLOT_CHANGE);
+            picc->pcd->poll_interval = 1000;
+
+			INFO_TO("found picc %s\n", picc->name);
         }
     }
     else            // card present before
     {
-        if(picc.type == PICC_MIFARE)
+        if(picc->type == PICC_MIFARE)
         {
-            PiccReset();
+            picc_reset(picc);
             Delay1ms(6);
-            if(MifareSelect() != ERROR_NO)
+            if(mifare_select(picc))
             {
-                if(MifareSelect() == ERROR_NO)
+                if(!mifare_select(picc))
                 {
-                    piccCode = 0x01;
+                    card_still_preset = true;
                 }
                 else
                 {
-                    piccCode = 0x00;
+                    card_still_preset = false;
                 }
             }
             else
             {
-                piccCode = 0x01;
+                card_still_preset = true;
             }
         }
-        else if((picc.type == PICC_TYPEA_TCL) || (picc.type == PICC_TYPEB_TCL))
+        else if((picc->type == PICC_TYPEA_TCL) || (picc->type == PICC_TYPEB_TCL))
         {
             // ISO/IEC 14443-4 PICC
-            if(picc.states == PICC_ACTIVATED)
+            if(picc->states == PICC_ACTIVATED)
             {
-                if(TCL_Select(0xB2) != ERROR_NO)        // R-block: ACK
+                if(typeA_select_(picc, 0xB2))        // R-block: ACK
                 {
-                    if(TCL_Select(0xB2) == ERROR_NO)
+                    if(!typeA_select_(picc, 0xB2))
                     {
-                        piccCode = 0x01;
+                        card_still_preset = true;
                     }
                     else
                     {
-                        piccCode = 0x00;
+                        card_still_preset = false;
                     }
                 }
                 else
                 {
-                    piccCode = 0x01;
+                    card_still_preset = true;
                 }
             }
             else
             {
-                if(picc.type == PICC_TYPEA_TCL)
+                if(picc->type == PICC_TYPEA_TCL)
                 {
-                    if(picc.states == PICC_POWEROFF)
+                    if(picc->states == PICC_POWEROFF)
                     {
-                        AntennaPower(1);
+                        turn_on_antenna();
                         Delay1ms(10);
                     }
 
-                    if(PcdRequestA(PICC_WUPA, picc.ATQA) == ERROR_NOTAG)
+                    if(typeA_request(picc, PICC_WUPA) == -ERROR_NOTAG)
                     {
-                        if(PcdRequestA(PICC_WUPA, picc.ATQA) == ERROR_NOTAG)
+                        if(typeA_request(picc, PICC_WUPA) == -ERROR_NOTAG)
                         {
-                            piccCode = 0x00;
+                            card_still_preset = 0x00;
                         }
                         else
                         {
-                            piccCode = 0x01;
+                            card_still_preset = 0x01;
                         }
                     }
                     else
                     {
-                        piccCode = 0x01;
+                        card_still_preset = 0x01;
                     }
 
                 }
                 else
                 {
-                    if(picc.states == PICC_POWEROFF)
+                    if(picc->states == PICC_POWEROFF)
                     {
-                        AntennaPower(1);
+                        turn_on_antenna();
                         Delay1us(100);
                     }
 
-                    if(PiccRequestB(PICC_WUPB,0) == ERROR_NOTAG)
+                    if(typeB_request(picc, PICC_WUPB,0) == -ERROR_NOTAG)
                     {
-                        if(PiccRequestB(PICC_WUPB,0) == ERROR_NOTAG)
+                        if(typeB_request(picc, PICC_WUPB,0) == -ERROR_NOTAG)
                         {
-                            piccCode = 0x00;
+                            card_still_preset = false;
                         }
                         else
                         {
-                            piccCode = 0x01;
+                            card_still_preset = true;
                         }
                     }
                     else
                     {
-                        piccCode = 0x01;
+                        card_still_preset = true;
                     }
                 }
             }
         }  
-        else if((picc.type == PICC_FELICA212) || (picc.type == PICC_FELICA424))   // add--s
+        else if((picc->type == PICC_FELICA212) || (picc->type == PICC_FELICA424))   // add--s
         {
-            if(picc.states == PICC_POWEROFF)
+            if(picc->states == PICC_POWEROFF)
             {
-                AntennaPower(1);
+                turn_on_antenna();
                 Delay1ms(6);
             }
-            if(FelReqResponse() == ERROR_NO)
+            if(!felica_request_response(picc))
             {
-                piccCode = 0x01;
+                card_still_preset = true;
             }
             else
             {
-                piccCode = 0x00;
+                card_still_preset = false;
             }
         }
-        else if(picc.type == PICC_TOPAZ)
+        else if(picc->type == PICC_TOPAZ)
         {
-            if(picc.states == PICC_POWEROFF)
+            if(picc->states == PICC_POWEROFF)
             {
-                AntennaPower(1);
+                turn_on_antenna();
                 Delay1ms(6);
             }
-            if(PcdRequestA(PICC_WUPA, picc.ATQA) == ERROR_NOTAG)
+            if(typeA_request(picc, PICC_WUPA) == -ERROR_NOTAG)
             {
-                if(PcdRequestA(PICC_WUPA, picc.ATQA) == ERROR_NOTAG)
+                if(typeA_request(picc, PICC_WUPA) == -ERROR_NOTAG)
                 {
-                    piccCode = 0x00;
+                    card_still_preset = false;
                 }
                 else
                 {
-                    piccCode = 0x01;
+                    card_still_preset = true;
                 }
             }
             else
             {
-                piccCode = 0x01;
+                card_still_preset = true;
             }
         }
 
         // Success a tag is still there
-        if(piccCode == 0x01)
+        if(card_still_preset)
         {
-            SET_BIT(picc.status, BIT_PRESENT);
+            SET_BIT(picc->status, PRESENT);
         }
         else
         {  
-            CLEAR_BIT(picc.status, BIT_PRESENT);
-            CLEAR_BIT(picc.status, BIT_FIRSTINSERT);
-            CLEAR_BIT(picc.status, BIT_ACTIVATED);
-            SET_BIT(picc.status, BIT_SLOTCHANGE);
+        	turn_off_antenna();
+            CLEAR_BIT(picc->status, PRESENT);
+            CLEAR_BIT(picc->status, FIRST_INSERT);
+            CLEAR_BIT(picc->status, ACTIVATED);
+            SET_BIT(picc->status, SLOT_CHANGE);
 
-            picc.type = PICC_ABSENT;
-            pcd.curSpeed = 0x80;
+            picc->type = PICC_ABSENT;
+			picc->name = "none";
+            picc->pcd->current_speed = 0x80;
+
+			INFO_TO("PICC removed\n");
         }
     }
 
-    PrtMsg(DBGL6, "%s: exit, piccType = %02X\n", __FUNCTION__, picc.type);
+//    TRACE_TO("exit %s, piccType = %02X\n", __func__, picc->type);
     
 }
 
 
-UINT8 PiccPowerON(UINT8 *atrBuf, UINT16 *atrLen)
+static int picc_power_on(struct picc_device *picc, u8 *atrBuf, u32 *atrLen)
 {
-    UINT8 ret = SLOT_NO_ERROR;
+    int ret = 0;
 
 
-    PrtMsg(DBGL4, "%s: start\n", __FUNCTION__);
 
-    if(BITISCLEAR(pcd.fgPoll, BIT_AUTOPOLL))
+    if(BITISCLEAR(picc->pcd->flags_polling, AUTO_POLLING))
     {
-        PiccPoll();
+        picc_polling_tags(picc);
     }
 
  
-//    if(BITISSET(picc.status, BIT_FIRSTINSERT))
-//    {
-//        CLEAR_BIT(picc.status, BIT_FIRSTINSERT); 
-//    }
-//    else
-//    {
-//        AntennaPower(0);
-//        Delay1ms(9);
-//    }
-    if(picc.states == PICC_POWEROFF)
+    if(picc->states == PICC_POWEROFF)
     {
-        AntennaPower(1);
-        if((picc.type == PICC_MIFARE) || (picc.type == PICC_TYPEA_TCL)) 
+        turn_on_antenna();
+        if((picc->type == PICC_MIFARE) || (picc->type == PICC_TYPEA_TCL)) 
         {
-            mifare.keyValid = 0x00;
+            picc->key_valid = 0x00;
             Delay1ms(10);
-            PollTypeATags();
+            typeA_polling_tags(picc);
         }
-        else if(picc.type == PICC_TYPEB_TCL)
+        else if(picc->type == PICC_TYPEB_TCL)
         {
             Delay1ms(6);
-            PollTypeBTags();
+            typeB_polling_tags(picc);
         }
-        else if(picc.type == PICC_FELICA212)
+        else if(picc->type == PICC_FELICA212)
         {
             Delay1ms(5);
-            PollFeliCaTags(PASSDEPI_212);   
+            felica_polling_tags(picc, PASSDEPI_212);   
         }
-        else if(picc.type == PICC_FELICA424)
+        else if(picc->type == PICC_FELICA424)
         {
             Delay1ms(5);
-            PollFeliCaTags(PASSDEPI_424);
+            felica_polling_tags(picc, PASSDEPI_424);
         }
-        else if(picc.type == PICC_TOPAZ)
+        else if(picc->type == PICC_TOPAZ)
         {
             Delay1ms(5);
-            PollTopazTags();
+            topaz_polling_tags(picc);
         }  
         else
         { 
-            picc.type = PICC_ABSENT;
+            picc->type = PICC_ABSENT;
+			picc->name = "none";
         }
     }
 
-    if(picc.type == PICC_ABSENT)
+    if(picc->type == PICC_ABSENT)
     {
         *atrLen = 0;
-        CLEAR_BIT(picc.status, BIT_ACTIVATED);
-        ret = SLOTERROR_ICC_MUTE;
-        AntennaPower(0);
+        CLEAR_BIT(picc->status, ACTIVATED);
+        ret = -PICC_ERRORCODE_MUTE;
+        turn_off_antenna();
     }
     else  
     {
-        SET_BIT(picc.status, BIT_ACTIVATED);       // Card Activate
-        PcscAtrBuild(atrBuf, atrLen);
-        ret = SLOT_NO_ERROR;
+        SET_BIT(picc->status, ACTIVATED);       // Card Activate
+        pcsc_building_atr(picc, atrBuf, atrLen);
+        ret = 0;
     }
 
-    PrtMsg(DBGL4, "%s: exit, ret = %02X\n", __FUNCTION__, ret);
     
     return(ret);
 }
 
 
-void PiccPowerOff(void)
+static void picc_power_off(struct picc_device *picc)
 {
-    PrtMsg(DBGL4, "%s: start\n", __FUNCTION__);
 
-    if(BITISCLEAR(picc.status, BIT_FIRSTINSERT))
+    if(BITISCLEAR(picc->status, FIRST_INSERT))
     {  
-        if((picc.type == PICC_TYPEA_TCL) || (picc.type == PICC_TYPEB_TCL))
+        if((picc->type == PICC_TYPEA_TCL) || (picc->type == PICC_TYPEB_TCL))
         {
-            if(DeselectRequest() != ERROR_NO)
+            if(typeA_deselect_request(picc))
             {
-                if(picc.type == PICC_TYPEA_TCL)
+                if(picc->type == PICC_TYPEA_TCL)
                 {
-                    PiccHaltA();
+                    typeA_halt(picc);
                 }
                 else
                 {
-                    PiccHaltB(picc.sn);
+                    typeB_halt(picc);
                 }
             }
         }
-        else if(picc.type == PICC_MIFARE)
+        else if(picc->type == PICC_MIFARE)
         {
-            PiccHaltA();
+            typeA_halt(picc);
         }
-        CLEAR_BIT(picc.status, BIT_ACTIVATED);
+        CLEAR_BIT(picc->status, ACTIVATED);
 
-        if(BITISCLEAR(pcd.fgPoll, BIT_AUTOPOLL))
+        if(BITISCLEAR(picc->pcd->flags_polling, AUTO_POLLING))
         {
             // if PCD do not auto poll, turn off the antenna
-            AntennaPower(0);
+            turn_off_antenna();
         }
 
     }
 
-    PrtMsg(DBGL4, "%s: exit\n", __FUNCTION__);
 }
 
 
-static UINT8 BsiCmdDispatch(UINT8 *pcmd, UINT16 cmdLen, UINT8 *pres, UINT16 *presLen)
+static u8 bsi_cmd_dispatch(u8 *pcmd, u32 cmdLen, u8 *pres, u32 *presLen)
 {
-    UINT8 recLen;
+    u32 recLen;
 
 
     if(pcmd[2] == 0x01)
@@ -447,7 +496,7 @@ static UINT8 BsiCmdDispatch(UINT8 *pcmd, UINT16 cmdLen, UINT8 *pres, UINT16 *pre
             default:
                 recLen = 0;
                 break;
-        }  
+        }	
         if(recLen == 0)
         {
             pres[0] = 0x6A;
@@ -468,18 +517,19 @@ static UINT8 BsiCmdDispatch(UINT8 *pcmd, UINT16 cmdLen, UINT8 *pres, UINT16 *pre
         *presLen = 2;
     }
     
-    return(SLOT_NO_ERROR);
+    return(0);
 }
 
 
-UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *resLen, UINT8 *level)
+static int picc_command_exchange(struct picc_device *picc, u8 *cmdBuf, u32 cmdLen, u8 *resBuf, u32 *resLen, u8 *level)
 {
-    UINT8 ret = SLOT_NO_ERROR;
-    UINT8 tempLe;
-    UINT8 i;
+    int ret = 0;
+    u32 tempLe;
+    u8 i;
+	struct pn512_request	*req = picc->request;
 
 
-    PrtMsg(DBGL2, "%s: start, cmdLen = %02X\n", __FUNCTION__, cmdLen);    
+//	TRACE_TO("enter %s\n", __func__); 
 
     //Psuedo-APDU Get UID/ATS
     if((cmdBuf[0] == 0xFF) && (cmdLen >= 0x05) && (*level == 0x00))            //Get UID/ATS
@@ -491,11 +541,12 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                 resBuf[0] = 0x67;
                 resBuf[1] = 0x00;
                 *resLen = 2;
-                return(SLOT_NO_ERROR);
+                ret = 0;
+				goto err;
             }
-            if((picc.type == PICC_FELICA212) || (picc.type == PICC_FELICA424))
+            if((picc->type == PICC_FELICA212) || (picc->type == PICC_FELICA424))
             {
-                ret = FelXfrHandle(cmdBuf + 5, cmdLen - 5, resBuf, resLen);
+                ret = felica_xfr_handler(picc, cmdBuf + 5, cmdLen - 5, resBuf, resLen);
                 if(*resLen > 2)
                 {
                     resBuf[(*resLen)++] = 0x90;
@@ -503,25 +554,34 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                 }
 
             }
-            else if(picc.type == PICC_TOPAZ)
+            else if(picc->type == PICC_TOPAZ)
             {
-                ret = TopazXfrHandle(cmdBuf + 5, cmdLen - 5, resBuf, resLen);
-                if(ret == SLOT_NO_ERROR)
+                ret = topaz_xfr_handler(picc, cmdBuf+5, cmdLen-5, resBuf, resLen);
+                if(!ret)
                 {
                     resBuf[(*resLen)++] = 0x90;
                     resBuf[(*resLen)++] = 0x00;
                 }
-                ret = SLOT_NO_ERROR;
+                ret = 0;
             }
             else
             {
-                ClearRegBit(REG_STATUS2, BIT_MFCRYPTO1ON);    // disable crypto 1 unit    
-                pcsc.fgStatus = 0x00;
-                FIFOFlush();
-                ret = PcdRawExchange(CMD_TRANSCEIVE, &cmdBuf[5], cmdBuf[4], resBuf, &tempLe);
-                if (ret == ERROR_NO)
+                pn512_reg_clear(Status2Reg, MFCrypto1On);    // disable crypto 1 unit    
+                picc->flags_status = 0x00;
+
+				memcpy(req->buf, &cmdBuf[5], cmdBuf[4]);
+				req->length = cmdBuf[4];
+				req->bit_frame = 0x00;
+				req->command = CMD_TRANSCEIVE;
+				req->direction = TRANSCEIVE;
+				req->time_out = 100;
+				
+				picc_wait_for_req(req);
+				memcpy(resBuf, req->buf, req->actual);
+				ret = req->error_code;
+				if (!ret)
                 {
-                    *resLen = tempLe;
+                    *resLen = req->actual;
                     resBuf[(*resLen)++] = 0x90;
                     resBuf[(*resLen)++] = 0x00;
                 }
@@ -531,7 +591,7 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                     resBuf[1] = 0x00;
                     *resLen   = 0x02; 
                 }
-                ret = SLOT_NO_ERROR;
+                ret = 0;
             }
         }
         else if((cmdBuf[1] == 0xCA) && (cmdBuf[3] == 0x00) && (cmdLen == 0x05))
@@ -540,23 +600,23 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
             tempLe = cmdBuf[4];
             if(cmdBuf[2] == 0x00)
             {
-                if(tempLe <= picc.snLen)
+                if(tempLe <= picc->sn_len)
                 {
 
-                    for(i = 0; i < picc.snLen; i++)
+                    for(i = 0; i < picc->sn_len; i++)
                     {
-                        resBuf[i] = picc.sn[i];
+                        resBuf[i] = picc->sn[i];
                     }
-                    if((tempLe == 0x00) || (tempLe == picc.snLen))
+                    if((tempLe == 0x00) || (tempLe == picc->sn_len))
                     {
                         resBuf[i++] = 0x90;
                         resBuf[i]   = 0x00;
-                        *resLen     = picc.snLen + 2;
+                        *resLen     = picc->sn_len + 2;
                     }
                     else
                     {
                         resBuf[tempLe]     = 0x6C;
-                        resBuf[tempLe + 1] = picc.snLen;
+                        resBuf[tempLe + 1] = picc->sn_len;
                         *resLen            = tempLe + 2;
                     }
                 }
@@ -574,23 +634,23 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                 resBuf[1] = 0x81;
                 *resLen   = 0x02;
                 tempLe    = cmdBuf[4];
-                if (picc.type == PICC_TYPEA_TCL)
+                if (picc->type == PICC_TYPEA_TCL)
                 {
-                    for(i = 0; i < picc.ATS[0]; i++)
+                    for(i = 0; i < picc->ATS[0]; i++)
                     {
-                        resBuf[i] = picc.ATS[i];
+                        resBuf[i] = picc->ATS[i];
                     }
-                    if(tempLe && (tempLe != picc.ATS[0]))
+                    if(tempLe && (tempLe != picc->ATS[0]))
                     {
                         resBuf[tempLe]     = 0x6C;
-                        resBuf[tempLe + 1] = picc.ATS[0];
+                        resBuf[tempLe + 1] = picc->ATS[0];
                         *resLen            = tempLe + 2;
                     }
                     else
                     {
                         resBuf[i++] = 0x90;
                         resBuf[i]   = 0x00;
-                        *resLen     = picc.ATS[0] + 2;
+                        *resLen     = picc->ATS[0] + 2;
                     }
                 }
             }
@@ -600,7 +660,7 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                 resBuf[1] = 0x00;
                 *resLen   = 0x02; 
             }
-            ret = SLOT_NO_ERROR;
+            ret = 0;
         }
         else if(cmdBuf[1] == 0xC2)
         {
@@ -611,21 +671,22 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
                     resBuf[0] = 0x67;
                     resBuf[1] = 0x00;
                     *resLen   = 2;
-                    return(SLOT_NO_ERROR);
+                    ret = (0);
+					goto err;
                 }
             }
-            ret = PcscIfdCmdDispatch(cmdBuf[3], cmdBuf + 5, cmdBuf[4], resBuf, resLen);
+            ret = pcsc_cmd_dispatch(picc, cmdBuf[3], cmdBuf+5, cmdBuf[4], resBuf, resLen);
         }
         else if((cmdBuf[1] == 0x9A) && (cmdLen >= 0x05))
         {
 
-            ret = BsiCmdDispatch(cmdBuf, cmdLen, resBuf, resLen);
+            ret = bsi_cmd_dispatch(cmdBuf, cmdLen, resBuf, resLen);
         }
         else 
         {
-            if(picc.type == PICC_MIFARE)
+            if(picc->type == PICC_MIFARE)
             {
-                ret = MifarePcscCommand(cmdBuf, cmdLen, resBuf, resLen);
+                ret = mifare_pcsc_command(picc, cmdBuf, cmdLen, resBuf, resLen);
             }
             else
             {
@@ -637,18 +698,18 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
     }
     else            // Standard APDUs
     {
-        if(((picc.type == PICC_TYPEA_TCL)||(picc.type == PICC_TYPEB_TCL)) && (picc.states == PICC_ACTIVATED))
+        if(((picc->type == PICC_TYPEA_TCL)||(picc->type == PICC_TYPEB_TCL)) && (picc->states == PICC_ACTIVATED))
         {
-            ret = PiccStandardApduTCL(cmdBuf, cmdLen, resBuf, resLen, level);
-            if(ret != SLOT_NO_ERROR)
+            ret = typeA_standard_apdu_handler(picc, cmdBuf, cmdLen, resBuf, resLen, level);
+            if(ret)
             {
-                DeselectRequest();
-                CLEAR_BIT(picc.status, BIT_ACTIVATED);
+                typeA_deselect_request(picc);
+                CLEAR_BIT(picc->status, ACTIVATED);
             }
         }
-        else if((picc.type == PICC_FELICA212) || (picc.type == PICC_FELICA424))
+        else if((picc->type == PICC_FELICA212) || (picc->type == PICC_FELICA424))
         {
-            ret = FelTransmisionHandle(cmdBuf, cmdLen, resBuf, resLen);
+            ret = felica_xfr_handler(picc, cmdBuf, cmdLen, resBuf, resLen);
             if(*resLen < 2)
             {
                 resBuf[(*resLen)++] = 0x90;
@@ -656,45 +717,81 @@ UINT8 PiccXfrDataExchange(UINT8 *cmdBuf, UINT16 cmdLen, UINT8 *resBuf, UINT16 *r
             }
 
         }
-        else if(picc.type == PICC_TOPAZ)
+        else if(picc->type == PICC_TOPAZ)
         {
-            ret = TopazTransmissionHandle(cmdBuf + 5,cmdLen - 5, resBuf, resLen);
+            ret = topaz_xfr_handler(picc, cmdBuf + 5,cmdLen - 5, resBuf, resLen);
             if(*resLen < 2)
             {
                 resBuf[(*resLen)++] = 0x90;
                 resBuf[(*resLen)++] = 0x00;
             }
-            ret = SLOT_NO_ERROR;
+            ret = 0;
         }
         else
         {
-            ret = SLOTERROR_CMD_ABORTED;
+            ret = -PICC_ERRORCODE_CMD_ABORTED;
         }
     }
-    
+err:
+//	TRACE_TO("exit %s\n", __func__);
+	
     return(ret);
 }
 
 
-void PiccInit(void)
+static int picc_param_init(struct pcd_common *common, u32 fsd)
 {
-    pcd.filterType = 0x1F;    // poll all card type
-    pcd.fgPoll     = 0x07;    // auto RATS, auto poll, poll card
-    pcd.maxSpeed   = 0x1B;
-    pcd.FSDI       = 0x08;    // 256 bytes
-    pcd.maxSpeed   = 0x1B;
-    pcd.curSpeed   = 0x80;
-    pcd.pollDelay  = 500;     // poll card interval time: default 500ms
+	if(fsd < 16)	return -EINVAL;			// FSD is not less than 16 Bytes
+	else if(fsd < 24)	common->pcd.FSDI = 0;		// FSD = 16 Bytes
+	else if(fsd < 32)	common->pcd.FSDI = 1;		// FSD = 24 Bytes
+	else if(fsd < 40)	common->pcd.FSDI = 2;		// FSD = 32 Bytes
+	else if(fsd < 48)	common->pcd.FSDI = 3;		// FSD = 40 Bytes
+	else if(fsd < 64)	common->pcd.FSDI = 4;		// FSD = 48 Bytes
+	else if(fsd < 96)	common->pcd.FSDI = 5;		// FSD = 64 Bytes
+	else if(fsd < 128)	common->pcd.FSDI = 6;		// FSD = 96 Bytes
+	else if(fsd < 256)	common->pcd.FSDI = 7;		// FSD = 128 Bytes
+	else		common->pcd.FSDI = 8;			// FSD is not more than 256 Bytes
+	
+	
+    common->pcd.support_card_type = TOPAZ|FELICA414|FELICA212|TYPEB|TYPEA;    // poll all card type
+	common->pcd.flags_polling     = POLLING_CARD_ENABLE|AUTO_POLLING|AUTO_RATS;    // auto RATS, auto poll, poll card
+    common->pcd.max_speed   = 0x1B;
+    common->pcd.max_speed   = 0x1B;
+    common->pcd.current_speed   = 0x80;
+    common->pcd.poll_interval = 500;     // poll card interval time: default 500ms
 
-    picc.states   = 0x00;
-    picc.fgTCL    = 0x00;
-    picc.FSCI     = 0x02;    // 32 bytes
-    picc.FWI      = 0x04;    // 4.8ms
-    picc.SFGI     = 0x00;    // default value is 0
-    picc.speed    = 0x80;
+    common->picc.states   = 0x00;
+    common->picc.flags_TCL    = 0x00;
+    common->picc.FSCI     = 0x02;    // 32 bytes
+    common->picc.FWI      = 0x04;    // 4.8ms
+    common->picc.SFGI     = 0x00;    // default value is 0
+    common->picc.speed    = 0x80;
+	common->picc.key_valid = 0x00;
+	
+	memset(common->pcd.mifare_key, 0xFF, sizeof(common->pcd.mifare_key));
 
-    pcsc.fgStatus = 0x00;
+    common->picc.flags_status = 0x00;
+	
+	common->pcd.picc = &common->picc;
+	common->picc.pcd = &common->pcd;
 
-    mifare.keyValid = 0x00;
+	return 0;
+}
+
+static int picc_init(struct pcd_common *common)
+{
+	int ret = 0;
+
+	
+	picc_param_init(common, 256);
+
+	ret = pn512_init(&common->picc.request);
+
+	return ret;
+}
+
+static void picc_uninit(void)
+{
+	pn512_uninit();
 }
 
