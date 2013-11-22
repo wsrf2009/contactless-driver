@@ -1,1 +1,0 @@
-cmd_/opt/acr890/pcd/mod/pcdm.ko := /opt/acr890/toolchain/bin/arm-arago-linux-gnueabi-ld -r  -T /opt/acr890/linux-2.6.37/scripts/module-common.lds --build-id  -o /opt/acr890/pcd/mod/pcdm.ko /opt/acr890/pcd/mod/pcdm.o /opt/acr890/pcd/mod/pcdm.mod.o
